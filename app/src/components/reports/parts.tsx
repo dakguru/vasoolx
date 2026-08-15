@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { GlassCard } from "@/components/ui/primitives";
+import { Panel } from "@/components/ui/erp";
 import { toDateInput } from "@/lib/format";
 import { daysAgoISO, startOfMonthISO } from "@/lib/report";
 import { useI18n } from "@/lib/i18n/provider";
@@ -25,24 +25,24 @@ export function DateRangeBar({
     { label: t("rep.thisMonth"), from: startOfMonthISO() },
   ];
   return (
-    <GlassCard className="p-4 print:hidden">
+    <Panel className="p-3.5 print:hidden">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="text-xs font-medium text-[color:var(--text-soft)]">{t("rep.from")}</label>
+          <label className="text-[11px] font-semibold text-[color:var(--text-soft)] uppercase tracking-wide">{t("rep.from")}</label>
           <input
             type="date"
             value={toDateInput(from)}
             onChange={(e) => setFrom(new Date(e.target.value).toISOString())}
-            className="field h-11 px-3 text-[15px] block mt-1"
+            className="field-erp h-9 px-3 text-[13px] block mt-1 tabular"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-[color:var(--text-soft)]">{t("rep.to")}</label>
+          <label className="text-[11px] font-semibold text-[color:var(--text-soft)] uppercase tracking-wide">{t("rep.to")}</label>
           <input
             type="date"
             value={toDateInput(to)}
             onChange={(e) => setTo(new Date(e.target.value).toISOString())}
-            className="field h-11 px-3 text-[15px] block mt-1"
+            className="field-erp h-9 px-3 text-[13px] block mt-1 tabular"
           />
         </div>
         <div className="flex gap-2 ml-auto flex-wrap">
@@ -53,14 +53,14 @@ export function DateRangeBar({
                 setFrom(p.from);
                 setTo(new Date().toISOString());
               }}
-              className="h-9 px-3 rounded-full glass-strong text-sm font-medium text-[color:var(--text-soft)] hover:brightness-105"
+              className="chip"
             >
               {p.label}
             </button>
           ))}
         </div>
       </div>
-    </GlassCard>
+    </Panel>
   );
 }
 
@@ -73,17 +73,18 @@ export function StatTile({
   value: string;
   tone?: "brand" | "success" | "danger" | "ink";
 }) {
-  const tones: Record<string, string> = {
-    brand: "text-[color:var(--brand)]",
-    success: "text-[color:var(--color-success)]",
-    danger: "text-[color:var(--color-danger)]",
-    ink: "text-[color:var(--text)]",
+  const colors: Record<string, string> = {
+    brand: "var(--brand)",
+    success: "var(--ok)",
+    danger: "var(--crit)",
+    ink: "var(--text)",
   };
+  const c = colors[tone];
   return (
-    <GlassCard className="p-4">
-      <div className={`text-2xl font-extrabold ${tones[tone]}`}>{value}</div>
-      <div className="text-sm text-[color:var(--text-soft)] mt-0.5">{label}</div>
-    </GlassCard>
+    <div className="panel kpi-accent p-3.5 pl-4" style={{ ["--kpi-color" as string]: c }}>
+      <div className="text-[20px] font-extrabold tabular" style={{ color: c }}>{value}</div>
+      <div className="text-[12px] text-[color:var(--text-soft)] mt-0.5">{label}</div>
+    </div>
   );
 }
 
@@ -104,34 +105,27 @@ export function DataTable({
 
   if (rows.length === 0) {
     return (
-      <GlassCard className="text-center py-10 text-[color:var(--text-soft)]">
+      <Panel className="text-center py-10 text-[color:var(--text-soft)]">
         {empty}
-      </GlassCard>
+      </Panel>
     );
   }
   return (
-    <GlassCard className="p-0 overflow-hidden">
+    <Panel className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-[15px]">
+        <table className="dt">
           <thead>
-            <tr className="text-left text-[color:var(--text-soft)] border-b border-[color:var(--glass-border)]">
+            <tr>
               {headers.map((h, i) => (
-                <th key={i} className="font-semibold px-4 py-3 whitespace-nowrap">
-                  {h}
-                </th>
+                <th key={i}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {paged.map((r, ri) => (
-              <tr
-                key={ri + page * PAGE_SIZE}
-                className="border-b border-[color:var(--glass-border)] last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-              >
+              <tr key={ri + page * PAGE_SIZE}>
                 {r.map((c, ci) => (
-                  <td key={ci} className="px-4 py-3 whitespace-nowrap text-[color:var(--text)]">
-                    {c}
-                  </td>
+                  <td key={ci} className="whitespace-nowrap">{c}</td>
                 ))}
               </tr>
             ))}
@@ -139,28 +133,16 @@ export function DataTable({
         </table>
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[color:var(--glass-border)]">
-          <span className="text-sm text-[color:var(--text-soft)]">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-[color:var(--line)]">
+          <span className="text-[12px] text-[color:var(--text-soft)] tabular">
             {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, rows.length)} of {rows.length}
           </span>
           <div className="flex gap-2">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-              className="h-9 px-4 rounded-full glass-strong text-sm font-medium disabled:opacity-40 hover:brightness-105"
-            >
-              ← Prev
-            </button>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
-              className="h-9 px-4 rounded-full glass-strong text-sm font-medium disabled:opacity-40 hover:brightness-105"
-            >
-              Next →
-            </button>
+            <button disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="chip disabled:opacity-40">← Prev</button>
+            <button disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} className="chip disabled:opacity-40">Next →</button>
           </div>
         </div>
       )}
-    </GlassCard>
+    </Panel>
   );
 }

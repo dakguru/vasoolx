@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
-import { PageHeader } from "@/components/shell/TopBar";
+import { ShieldCheck, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import { PageHead, Panel, PanelHead } from "@/components/ui/erp";
 import {
-  GlassCard,
   Button,
   Label,
   PhoneInput,
@@ -39,42 +39,47 @@ export default function AddUserPage() {
 
   return (
     <>
-      <PageHeader title={t("user.addUser")} back="/users" />
+      <PageHead
+        title={t("user.addUser")}
+        subtitle="Invite a field agent or partner to this workspace"
+        actions={<Link href="/users" className="chip"><ChevronLeft size={15} /> Users</Link>}
+      />
 
-      <main className="px-4 md:px-8 pb-8 space-y-5 max-w-2xl mx-auto w-full">
-        <div>
-          <Label>{t("cust.phoneNumber")}</Label>
-          <PhoneInput value={phone} onChange={setPhone} />
-        </div>
+      <main className="px-4 md:px-6 py-4 space-y-4 max-w-2xl w-full">
+        <Panel className="p-4 space-y-5">
+          <div>
+            <Label>{t("cust.phoneNumber")}</Label>
+            <PhoneInput value={phone} onChange={setPhone} />
+          </div>
 
-        <div>
-          <Label>{t("user.selectLine")}</Label>
-          <Select value={lineId} onChange={(e) => setLineId(e.target.value)}>
-            <option value="">{t("user.chooseLine")}</option>
-            {data.lines.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+          <div>
+            <Label>{t("user.selectLine")}</Label>
+            <Select value={lineId} onChange={(e) => setLineId(e.target.value)}>
+              <option value="">{t("user.chooseLine")}</option>
+              {data.lines.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+          </div>
 
-        <div>
-          <Label>{t("user.accessType")}</Label>
-          <Segmented<AccessType>
-            value={access}
-            onChange={setAccess}
-            options={[
-              { value: "agent", label: t("user.agent") },
-              { value: "partner", label: t("user.partner") },
-            ]}
-          />
-        </div>
+          <div>
+            <Label>{t("user.accessType")}</Label>
+            <Segmented<AccessType>
+              value={access}
+              onChange={setAccess}
+              options={[
+                { value: "agent", label: t("user.agent") },
+                { value: "partner", label: t("user.partner") },
+              ]}
+            />
+          </div>
+        </Panel>
 
-        <GlassCard className="bg-[color:var(--brand)]/5">
-          <h3 className="font-bold text-[color:var(--text)] mb-3">
-            {t("user.instructions")}
-          </h3>
+        <Panel>
+          <PanelHead title={t("user.instructions")} icon={<ShieldCheck size={15} />} />
+          <div className="p-4">
           <ul className="space-y-2.5 text-[color:var(--text-soft)] text-[15px]">
             {access === "agent" ? (
               <>
@@ -91,10 +96,11 @@ export default function AddUserPage() {
               </>
             )}
           </ul>
-          <button className="mt-4 mx-auto flex items-center gap-2 h-11 px-5 rounded-full border border-[color:var(--brand)]/40 text-[color:var(--brand)] font-semibold">
-            <ShieldCheck size={18} /> {t("user.customizeAccess")}
+          <button className="mt-4 flex items-center gap-2 h-10 px-4 rounded-lg border border-[color:var(--brand)]/40 text-[color:var(--brand)] font-semibold text-[13px]">
+            <ShieldCheck size={16} /> {t("user.customizeAccess")}
           </button>
-        </GlassCard>
+          </div>
+        </Panel>
 
         <Button full size="lg" onClick={send} disabled={!phone || !lineId}>
           {t("user.sendRequest")}

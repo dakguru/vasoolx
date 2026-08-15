@@ -9,6 +9,7 @@ import { GlassCard, Button, Segmented, Select } from "@/components/ui/primitives
 import { DateRangeBar, StatTile, DataTable } from "@/components/reports/parts";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
+import { inLine } from "@/lib/data/selectors";
 import {
   loanPaid,
   loanOutstanding,
@@ -55,13 +56,13 @@ export default function ReportDetailPage() {
       case "loan-summary": {
         const days: Record<string, { collected: number; given: number }> = {};
         data.payments
-          .filter((p) => p.lineId === lineId && inRange(p.date, from, to))
+          .filter((p) => inLine(p.lineId, lineId) && inRange(p.date, from, to))
           .forEach((p) => {
             const k = fmtDate(p.date);
             (days[k] ??= { collected: 0, given: 0 }).collected += p.amount;
           });
         data.loans
-          .filter((l) => l.lineId === lineId && inRange(l.startDate, from, to))
+          .filter((l) => inLine(l.lineId, lineId) && inRange(l.startDate, from, to))
           .forEach((l) => {
             const k = fmtDate(l.startDate);
             (days[k] ??= { collected: 0, given: 0 }).given += l.disbursed;
@@ -90,7 +91,7 @@ export default function ReportDetailPage() {
       case "expense": {
         const src = slug === "investment" ? data.investments : data.expenses;
         const items = src
-          .filter((x) => x.lineId === lineId && inRange(x.date, from, to))
+          .filter((x) => inLine(x.lineId, lineId) && inRange(x.date, from, to))
           .sort((a, b) => +new Date(b.date) - +new Date(a.date));
         const total = items.reduce((s, x) => s + x.amount, 0);
         return {
@@ -149,7 +150,7 @@ export default function ReportDetailPage() {
       }
 
       case "customer": {
-        const custs = data.customers.filter((c) => c.lineId === lineId);
+        const custs = data.customers.filter((c) => inLine(c.lineId, lineId));
         const rowData = custs.map((c) => {
           const loans = data.loans.filter((l) => l.customerId === c.id);
           const borrowed = loans.reduce((s, l) => s + l.principal, 0);
@@ -184,22 +185,22 @@ export default function ReportDetailPage() {
         type Entry = { date: string; entry: string; who: string; debit: number; credit: number };
         const entries: Entry[] = [];
         data.loans
-          .filter((l) => l.lineId === lineId && inRange(l.startDate, from, to))
+          .filter((l) => inLine(l.lineId, lineId) && inRange(l.startDate, from, to))
           .forEach((l) =>
             entries.push({ date: l.startDate, entry: "Loan disbursed", who: custName(l.customerId), debit: l.disbursed, credit: 0 })
           );
         data.payments
-          .filter((p) => p.lineId === lineId && inRange(p.date, from, to))
+          .filter((p) => inLine(p.lineId, lineId) && inRange(p.date, from, to))
           .forEach((p) =>
             entries.push({ date: p.date, entry: "Payment", who: custName(p.customerId), debit: 0, credit: p.amount })
           );
         data.investments
-          .filter((i) => i.lineId === lineId && inRange(i.date, from, to))
+          .filter((i) => inLine(i.lineId, lineId) && inRange(i.date, from, to))
           .forEach((i) =>
             entries.push({ date: i.date, entry: `Investment: ${i.type}`, who: "—", debit: 0, credit: i.amount })
           );
         data.expenses
-          .filter((e) => e.lineId === lineId && inRange(e.date, from, to))
+          .filter((e) => inLine(e.lineId, lineId) && inRange(e.date, from, to))
           .forEach((e) =>
             entries.push({ date: e.date, entry: `Expense: ${e.type}`, who: "—", debit: e.amount, credit: 0 })
           );
@@ -229,12 +230,12 @@ export default function ReportDetailPage() {
 
       case "plan":
       default: {
-        const loans = data.loans.filter((l) => l.lineId === lineId);
-        const investment = data.investments.filter((i) => i.lineId === lineId).reduce((s, i) => s + i.amount, 0);
+        const loans = data.loans.filter((l) => inLine(l.lineId, lineId));
+        const investment = data.investments.filter((i) => inLine(i.lineId, lineId)).reduce((s, i) => s + i.amount, 0);
         const disbursed = loans.reduce((s, l) => s + l.disbursed, 0);
-        const collected = data.payments.filter((p) => p.lineId === lineId).reduce((s, p) => s + p.amount, 0);
+        const collected = data.payments.filter((p) => inLine(p.lineId, lineId)).reduce((s, p) => s + p.amount, 0);
         const outstanding = loans.filter((l) => l.status === "active").reduce((s, l) => s + loanOutstanding(data, l), 0);
-        const expenses = data.expenses.filter((e) => e.lineId === lineId).reduce((s, e) => s + e.amount, 0);
+        const expenses = data.expenses.filter((e) => inLine(e.lineId, lineId)).reduce((s, e) => s + e.amount, 0);
         const expectedProfit = loans.reduce((s, l) => s + (loanTotalDue(l) - l.disbursed), 0) - expenses;
         const cashInHand = investment + collected - disbursed - expenses;
         return {

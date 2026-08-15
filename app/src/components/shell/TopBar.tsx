@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Bell, Check, Plus } from "lucide-react";
+import { ChevronDown, Bell, Check, Plus, Layers } from "lucide-react";
 import { useStore } from "@/lib/data/store";
+import { ALL_LINES } from "@/lib/data/selectors";
 import { useI18n } from "@/lib/i18n/provider";
 import { LogoMark } from "@/components/ui/Logo";
 import { Sheet } from "@/components/ui/Sheet";
@@ -51,6 +52,25 @@ export function TopBar() {
         title={t("line.switchLine")}
       >
         <div className="flex flex-col gap-3 pb-2">
+          {data.lines.length > 1 && (
+            <button
+              onClick={() => { setActiveLine(ALL_LINES); setPickerOpen(false); }}
+              className={`flex items-center justify-between h-16 px-5 rounded-2xl border transition ${
+                activeLine?.id === ALL_LINES ? "bg-[color:var(--brand)]/12 border-[color:var(--brand)]/40" : "field"
+              }`}
+            >
+              <div className="flex items-center gap-3 text-left">
+                <span className="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-[color:var(--brand)] to-[color:var(--brand-strong)] text-white shrink-0">
+                  <Layers size={20} />
+                </span>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand)]">Consolidated</div>
+                  <div className="text-lg font-bold text-[color:var(--text)]">All Lines</div>
+                </div>
+              </div>
+              {activeLine?.id === ALL_LINES && <Check className="text-[color:var(--brand)]" />}
+            </button>
+          )}
           {data.lines.map((l) => {
             const active = l.id === activeLine?.id;
             return (

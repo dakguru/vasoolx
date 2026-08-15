@@ -21,7 +21,7 @@ import type {
   Profile,
 } from "./types";
 import { buildSeed, uid } from "./seed";
-import { loanOutstanding } from "./selectors";
+import { loanOutstanding, ALL_LINES } from "./selectors";
 
 const STORAGE_KEY = "vasoolx.data.v1";
 
@@ -482,10 +482,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist(seed);
   }, [persist]);
 
-  const activeLine = useMemo(
-    () => data.lines.find((l) => l.id === data.activeLineId) ?? data.lines[0] ?? null,
-    [data.lines, data.activeLineId]
-  );
+  const activeLine = useMemo(() => {
+    if (data.activeLineId === ALL_LINES && data.lines.length > 0) {
+      return {
+        id: ALL_LINES,
+        name: "All Lines",
+        loanType: "daily",
+        interestRate: 0,
+        processingFees: 0,
+        installmentsPeriod: 0,
+        badLoanDays: 0,
+        closeLoanManually: false,
+        enableCustomerNumber: false,
+        createdAt: "",
+      } as Line;
+    }
+    return data.lines.find((l) => l.id === data.activeLineId) ?? data.lines[0] ?? null;
+  }, [data.lines, data.activeLineId]);
 
   const value: StoreContextValue = {
     data,
