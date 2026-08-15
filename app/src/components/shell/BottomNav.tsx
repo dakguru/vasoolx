@@ -21,7 +21,7 @@ export function BottomNav() {
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 pb-[env(safe-area-inset-bottom)] pointer-events-none">
       <div className="mx-auto max-w-lg px-3 pb-3 pointer-events-auto">
-        <div className="glass-strong glass-sheen rounded-[26px] px-2 py-2 flex justify-between shadow-xl">
+        <div className="bg-[color:var(--sheet-bg)] backdrop-blur-xl border border-[color:var(--glass-border)] glass-sheen rounded-[26px] px-2 py-2 flex justify-between shadow-xl">
           {items.map(({ href, label, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (

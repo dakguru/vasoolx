@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/shell/TopBar";
 import { GlassCard, Button } from "@/components/ui/primitives";
 import { CustomerSheet } from "@/components/sheets/CustomerSheet";
 import { LoanSheet } from "@/components/sheets/LoanSheet";
+import { PaymentSheet } from "@/components/sheets/PaymentSheet";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import {
@@ -29,16 +30,18 @@ import {
   areaName,
 } from "@/lib/data/selectors";
 import { inr, fmtDate } from "@/lib/format";
-import type { Loan } from "@/lib/data/types";
+import type { Loan, Payment } from "@/lib/data/types";
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useI18n();
   const router = useRouter();
-  const { data, activeLine, deleteCustomer, setLoanStatus, addPayment } = useStore();
+  const { data, activeLine, deleteCustomer, setLoanStatus, addPayment, deletePayment, deleteLoan } = useStore();
 
   const [editOpen, setEditOpen] = useState(false);
   const [loanOpen, setLoanOpen] = useState(false);
+  const [editLoan, setEditLoan] = useState<Loan | null>(null);
+  const [paySheet, setPaySheet] = useState<Payment | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const customer = data.customers.find((c) => c.id === id) ?? null;
@@ -214,6 +217,25 @@ export default function CustomerDetailPage() {
                           <Button size="sm" variant="outline" onClick={() => setLoanStatus(loan.id, "active")}>{t("cust.reopenLoan")}</Button>
                         )}
                         <button
+                          onClick={() => {
+                            setEditLoan(loan);
+                            setLoanOpen(true);
+                          }}
+                          className="h-8 px-4 rounded-full text-sm font-medium text-[color:var(--brand)] hover:bg-[color:var(--brand)]/10"
+                        >
+                          {t("loan.edit") || "Edit Loan"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(t("common.deleteConfirm") || "Are you sure you want to completely delete this loan and all its payments?")) {
+                              deleteLoan(loan.id);
+                            }
+                          }}
+                          className="h-8 px-4 rounded-full text-sm font-medium text-[color:var(--color-danger)] hover:bg-[color:var(--color-danger)]/10"
+                        >
+                          {t("common.delete") || "Delete"}
+                        </button>
+                        <button
                           onClick={() => setExpanded(isOpen ? null : loan.id)}
                           className="ml-auto flex items-center gap-1 text-sm font-semibold text-[color:var(--brand)]"
                         >
@@ -254,10 +276,32 @@ export default function CustomerDetailPage() {
                             ) : (
                               <div className="max-h-64 overflow-y-auto rounded-xl border border-[color:var(--glass-border)]">
                                 {pays.map((p) => (
-                                  <div key={p.id} className="flex items-center justify-between px-3 py-2 border-b border-[color:var(--glass-border)] last:border-0 text-sm">
+                                  <div key={p.id} className="group flex items-center justify-between px-3 py-2 border-b border-[color:var(--glass-border)] last:border-0 text-sm">
                                     <span className="text-[color:var(--text-soft)]">{fmtDate(p.date)}</span>
                                     <span className="text-[color:var(--text-faint)]">{t(`fin.${p.method}`)}</span>
-                                    <span className="font-bold text-[color:var(--color-success)]">+{inr(p.amount)}</span>
+                                    <div className="text-right whitespace-nowrap text-[color:var(--color-success)] font-bold tabular-nums">
+                                      +{inr(p.amount)}
+                                    </div>
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition focus-within:opacity-100 ml-4">
+                                      <button
+                                        onClick={() => setPaySheet(p)}
+                                        className="w-7 h-7 rounded-full grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)] hover:brightness-105"
+                                        aria-label="Edit"
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          if (confirm(t("common.deleteConfirm") || "Are you sure?")) {
+                                            deletePayment(p.id);
+                                          }
+                                        }}
+                                        className="w-7 h-7 rounded-full grid place-items-center bg-[color:var(--color-danger)]/10 text-[color:var(--color-danger)] hover:brightness-105"
+                                        aria-label="Delete"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -275,7 +319,12 @@ export default function CustomerDetailPage() {
       </main>
 
       <CustomerSheet open={editOpen} onClose={() => setEditOpen(false)} editing={customer} />
-      <LoanSheet open={loanOpen} onClose={() => setLoanOpen(false)} customer={customer} />
+      <LoanSheet open={loanOpen} onClose={() => setLoanOpen(false)} customer={customer} editLoan={editLoan} />
+      <PaymentSheet 
+        open={!!paySheet} 
+        onClose={() => setPaySheet(null)} 
+        payment={paySheet} 
+      />
     </>
   );
 }

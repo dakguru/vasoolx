@@ -43,9 +43,13 @@ type StoreContextValue = {
   deleteCustomer: (id: string) => boolean;
   // loans
   addLoan: (l: Omit<Loan, "id" | "createdAt">) => Loan;
+  updateLoan: (id: string, patch: Partial<Loan>) => void;
+  deleteLoan: (id: string) => boolean;
   setLoanStatus: (id: string, status: Loan["status"]) => void;
   // payments / collection
   addPayment: (p: Omit<Payment, "id">) => void;
+  updatePayment: (id: string, patch: Partial<Payment>) => void;
+  deletePayment: (id: string) => boolean;
   collect: (opts: {
     lineId: string;
     areaId: string | null;
@@ -54,8 +58,10 @@ type StoreContextValue = {
   }) => number;
   // finance
   addInvestment: (i: Omit<Investment, "id">) => void;
+  updateInvestment: (id: string, patch: Partial<Investment>) => void;
   deleteInvestment: (id: string) => void;
   addExpense: (e: Omit<Expense, "id">) => void;
+  updateExpense: (id: string, patch: Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
   // members
   addMember: (m: Omit<Member, "id" | "createdAt">) => void;
@@ -225,27 +231,46 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addLoan: StoreContextValue["addLoan"] = useCallback(
     (l) => {
       const loan: Loan = { ...l, id: uid("loan"), createdAt: new Date().toISOString() };
-      persist({ ...data, loans: [...data.loans, loan] });
+      update((d) => ({ ...d, loans: [...d.loans, loan] }));
       return loan;
     },
-    [data, persist]
+    [update]
+  );
+
+  const updateLoan: StoreContextValue["updateLoan"] = useCallback(
+    (id, patch) =>
+      update((d) => ({
+        ...d,
+        loans: d.loans.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+      })),
+    [update]
+  );
+
+  const deleteLoan: StoreContextValue["deleteLoan"] = useCallback(
+    (id) => {
+      let ok = false;
+      update((d) => {
+        ok = true;
+        return { 
+          ...d, 
+          loans: d.loans.filter((l) => l.id !== id),
+          payments: d.payments.filter((p) => p.loanId !== id) 
+        };
+      });
+      return ok;
+    },
+    [update]
   );
 
   const setLoanStatus: StoreContextValue["setLoanStatus"] = useCallback(
-    (id, status) =>
-      update((d) => ({
-        ...d,
-        loans: d.loans.map((l) => (l.id === id ? { ...l, status } : l)),
-      })),
-    [update]
+    (id, status) => updateLoan(id, { status }),
+    [updateLoan]
   );
 
   const addPayment: StoreContextValue["addPayment"] = useCallback(
     (p) =>
       update((d) => {
         const newPayments = [...d.payments, { ...p, id: uid("pay") }];
-
-        // Auto-close the loan if fully paid (unless closeLoanManually is set)
         const loan = d.loans.find((l) => l.id === p.loanId);
         const line = loan ? d.lines.find((ln) => ln.id === loan.lineId) : null;
         let updatedLoans = d.loans;
@@ -260,9 +285,58 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             );
           }
         }
-
         return { ...d, payments: newPayments, loans: updatedLoans };
       }),
+    [update]
+  );
+
+  const updatePayment: StoreContextValue["updatePayment"] = useCallback(
+    (id, patch) =>
+      update((d) => {
+        const newPayments = d.payments.map((p) => (p.id === id ? { ...p, ...patch } : p));
+        const payment = newPayments.find((p) => p.id === id);
+        const loan = payment ? d.loans.find((l) => l.id === payment.loanId) : null;
+        const line = loan ? d.lines.find((ln) => ln.id === loan.lineId) : null;
+        let updatedLoans = d.loans;
+        if (loan && line && !line.closeLoanManually) {
+          const totalPaid = newPayments
+            .filter((pay) => pay.loanId === loan.id)
+            .reduce((s, pay) => s + pay.amount, 0);
+          const totalDue = loan.installmentAmount * loan.installments;
+          const status = totalPaid >= totalDue ? "closed" : "active";
+          updatedLoans = d.loans.map((l) =>
+            l.id === loan.id ? { ...l, status } : l
+          );
+        }
+        return { ...d, payments: newPayments, loans: updatedLoans };
+      }),
+    [update]
+  );
+
+  const deletePayment: StoreContextValue["deletePayment"] = useCallback(
+    (id) => {
+      let ok = false;
+      update((d) => {
+        ok = true;
+        const payment = d.payments.find((p) => p.id === id);
+        const newPayments = d.payments.filter((p) => p.id !== id);
+        const loan = payment ? d.loans.find((l) => l.id === payment.loanId) : null;
+        const line = loan ? d.lines.find((ln) => ln.id === loan.lineId) : null;
+        let updatedLoans = d.loans;
+        if (loan && line && !line.closeLoanManually) {
+          const totalPaid = newPayments
+            .filter((pay) => pay.loanId === loan.id)
+            .reduce((s, pay) => s + pay.amount, 0);
+          const totalDue = loan.installmentAmount * loan.installments;
+          const status = totalPaid >= totalDue ? "closed" : "active";
+          updatedLoans = d.loans.map((l) =>
+            l.id === loan.id ? { ...l, status } : l
+          );
+        }
+        return { ...d, payments: newPayments, loans: updatedLoans };
+      });
+      return ok;
+    },
     [update]
   );
 
@@ -335,6 +409,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [update]
   );
 
+  const updateInvestment: StoreContextValue["updateInvestment"] = useCallback(
+    (id, patch) =>
+      update((d) => ({
+        ...d,
+        investments: d.investments.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+      })),
+    [update]
+  );
+
   const deleteInvestment: StoreContextValue["deleteInvestment"] = useCallback(
     (id) =>
       update((d) => ({
@@ -349,6 +432,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       update((d) => ({
         ...d,
         expenses: [...d.expenses, { ...e, id: uid("exp") }],
+      })),
+    [update]
+  );
+
+  const updateExpense: StoreContextValue["updateExpense"] = useCallback(
+    (id, patch) =>
+      update((d) => ({
+        ...d,
+        expenses: d.expenses.map((e) => (e.id === id ? { ...e, ...patch } : e)),
       })),
     [update]
   );
@@ -409,12 +501,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     updateCustomer,
     deleteCustomer,
     addLoan,
+    updateLoan,
+    deleteLoan,
     setLoanStatus,
     addPayment,
+    updatePayment,
+    deletePayment,
     collect,
     addInvestment,
+    updateInvestment,
     deleteInvestment,
     addExpense,
+    updateExpense,
     deleteExpense,
     addMember,
     deleteMember,

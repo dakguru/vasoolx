@@ -184,15 +184,6 @@ export default function DashboardPage() {
           <p className="mt-2 text-[color:var(--text-soft)]">{t("dash.trialBanner")}</p>
         </GlassCard>
       )}
-      <a href="https://vasool.app" target="_blank" rel="noreferrer" className="block">
-        <GlassCard className="flex items-center justify-between active:scale-[.99] hover:brightness-105 transition">
-          <div>
-            <div className="font-bold text-[color:var(--text)]">{t("dash.watchDemo")}</div>
-            <div className="text-sm text-[color:var(--text-soft)]">{t("dash.watchDemoDesc")}</div>
-          </div>
-          <PlayCircle className="text-[#ff0000] shrink-0" size={34} />
-        </GlassCard>
-      </a>
       <GlassCard className="flex items-center justify-between">
         <div>
           <div className="font-bold text-[color:var(--text)]">{t("dash.shareApp")}</div>

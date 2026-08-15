@@ -8,7 +8,8 @@ import { FinanceSheet } from "@/components/sheets/FinanceSheet";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { inr, fmtDate } from "@/lib/format";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import type { Investment, Expense } from "@/lib/data/types";
 
 type Tab = "investment" | "expense";
 
@@ -17,6 +18,7 @@ export default function FinancePage() {
   const { data, activeLine, deleteInvestment, deleteExpense } = useStore();
   const [tab, setTab] = useState<Tab>("investment");
   const [sheet, setSheet] = useState(false);
+  const [editItem, setEditItem] = useState<Investment | Expense | null>(null);
 
   const items = useMemo(() => {
     if (!activeLine) return [];
@@ -60,9 +62,17 @@ export default function FinancePage() {
           <button className="w-12 h-12 rounded-full glass-strong grid place-items-center text-[color:var(--brand)]">
             <SlidersHorizontal size={20} />
           </button>
-          <Button className="h-12" onClick={() => setSheet(true)}>
-            <Plus size={18} /> {t("common.add")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="h-12"
+              onClick={() => {
+                setEditItem(null);
+                setSheet(true);
+              }}
+            >
+              <Plus size={18} /> {t("common.add")}
+            </Button>
+          </div>
         </div>
 
         {items.length === 0 ? (
@@ -89,6 +99,16 @@ export default function FinancePage() {
                   </div>
                   <button
                     onClick={() => {
+                      setEditItem(x);
+                      setSheet(true);
+                    }}
+                    className="w-8 h-8 rounded-full grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)] opacity-0 group-hover:opacity-100 transition focus:opacity-100"
+                    aria-label="Edit"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    onClick={() => {
                       if (confirm(t("common.deleteConfirm") || "Are you sure you want to delete this entry?")) {
                         if (isInv) deleteInvestment(x.id);
                         else deleteExpense(x.id);
@@ -106,7 +126,7 @@ export default function FinancePage() {
         )}
       </main>
 
-      <FinanceSheet open={sheet} onClose={() => setSheet(false)} kind={tab} />
+      <FinanceSheet open={sheet} onClose={() => setSheet(false)} kind={tab} editItem={editItem} />
     </>
   );
 }

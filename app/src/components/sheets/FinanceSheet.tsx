@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { fromDateInput, toDateInput } from "@/lib/format";
-import type { PaymentMethod } from "@/lib/data/types";
+import type { PaymentMethod, Investment, Expense } from "@/lib/data/types";
 
 const EXPENSE_TYPES = ["Fuel", "Salary", "Rent", "Tea & snacks", "Office", "Travel", "Other"];
 const INVESTMENT_TYPES = ["Capital", "Top-up", "Partner", "Loan repayment", "Other"];
@@ -15,13 +15,15 @@ export function FinanceSheet({
   open,
   onClose,
   kind,
+  editItem,
 }: {
   open: boolean;
   onClose: () => void;
   kind: "investment" | "expense";
+  editItem?: Investment | Expense | null;
 }) {
   const { t } = useI18n();
-  const { activeLine, addExpense, addInvestment } = useStore();
+  const { activeLine, addExpense, addInvestment, updateExpense, updateInvestment } = useStore();
 
   const [type, setType] = useState("");
   const [amount, setAmount] = useState("");
@@ -30,6 +32,19 @@ export function FinanceSheet({
   const [note, setNote] = useState("");
 
   const isExp = kind === "expense";
+
+  useEffect(() => {
+    if (editItem && open) {
+      setType(editItem.type);
+      setAmount(String(editItem.amount));
+      setMethod(editItem.method);
+      setDate(toDateInput(editItem.date));
+      setNote(editItem.note || "");
+    } else if (open) {
+      reset();
+      setDate(toDateInput(new Date().toISOString()));
+    }
+  }, [editItem, open]);
 
   function reset() {
     setType("");
@@ -41,15 +56,20 @@ export function FinanceSheet({
   function save() {
     if (!activeLine || !type || !amount) return;
     const payload = {
-      lineId: activeLine.id,
       type,
       amount: Number(amount) || 0,
       method,
       date: fromDateInput(date),
       note,
     };
-    if (isExp) addExpense(payload);
-    else addInvestment(payload);
+    if (editItem) {
+      if (isExp) updateExpense(editItem.id, payload);
+      else updateInvestment(editItem.id, payload);
+    } else {
+      const createPayload = { ...payload, lineId: activeLine.id };
+      if (isExp) addExpense(createPayload);
+      else addInvestment(createPayload);
+    }
     reset();
     onClose();
   }
@@ -58,7 +78,7 @@ export function FinanceSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title={isExp ? t("fin.addExpense") : t("fin.addInvestment")}
+      title={editItem ? (isExp ? t("fin.editExpense") || "Edit Expense" : t("fin.editInvestment") || "Edit Investment") : (isExp ? t("fin.addExpense") : t("fin.addInvestment"))}
       footer={
         <Button full size="lg" onClick={save} disabled={!type || !amount}>
           {t("common.save")}

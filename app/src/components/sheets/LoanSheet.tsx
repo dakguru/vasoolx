@@ -6,21 +6,23 @@ import { Button, Input, Label, Segmented, Select } from "@/components/ui/primiti
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { inr, fromDateInput, toDateInput } from "@/lib/format";
-import type { Customer, LoanType, PaymentMethod } from "@/lib/data/types";
+import type { Customer, Loan, LoanType, PaymentMethod } from "@/lib/data/types";
 
 export function LoanSheet({
   open,
   onClose,
   customer,
+  editLoan,
   onCreated,
 }: {
   open: boolean;
   onClose: () => void;
   customer: Customer;
+  editLoan?: Loan | null;
   onCreated?: (loanId: string) => void;
 }) {
   const { t } = useI18n();
-  const { activeLine, addLoan } = useStore();
+  const { activeLine, addLoan, updateLoan } = useStore();
 
   const [type, setType] = useState<LoanType>("daily");
   const [date, setDate] = useState(toDateInput(new Date().toISOString()));
@@ -34,16 +36,35 @@ export function LoanSheet({
 
   useEffect(() => {
     if (open && activeLine) {
-      setType(activeLine.loanType);
-      setPeriod(String(activeLine.installmentsPeriod || 30));
-      setBadDays(String(activeLine.badLoanDays || 15));
-      setProcessing("");
-      setDate(toDateInput(new Date().toISOString()));
-      setAmount("");
-      setInterest("");
-      setCalculated(false);
+      if (editLoan) {
+        setType(editLoan.type);
+        setDate(toDateInput(editLoan.startDate));
+        setAmount(String(editLoan.principal));
+        setInterest(String(editLoan.interest));
+        // Reverse-engineer the period from installments and type
+        const pDays =
+          editLoan.type === "monthly"
+            ? editLoan.installments * 30
+            : editLoan.type === "weekly"
+            ? editLoan.installments * 7
+            : editLoan.installments;
+        setPeriod(String(pDays));
+        setProcessing(String(editLoan.processingFees));
+        setBadDays(String(editLoan.badLoanDays));
+        setMethod(editLoan.method);
+        setCalculated(true);
+      } else {
+        setType(activeLine.loanType);
+        setPeriod(String(activeLine.installmentsPeriod || 30));
+        setBadDays(String(activeLine.badLoanDays || 15));
+        setProcessing("");
+        setDate(toDateInput(new Date().toISOString()));
+        setAmount("");
+        setInterest("");
+        setCalculated(false);
+      }
     }
-  }, [open, activeLine]);
+  }, [open, activeLine, editLoan]);
 
   const principal = Number(amount) || 0;
   const interestAmt = Number(interest) || 0;
@@ -82,9 +103,7 @@ export function LoanSheet({
 
   function save() {
     if (!activeLine || principal <= 0) return;
-    const loan = addLoan({
-      customerId: customer.id,
-      lineId: activeLine.id,
+    const payload = {
       principal,
       interest: interestAmt,
       processingFees: processingN,
@@ -95,10 +114,20 @@ export function LoanSheet({
       badLoanDays: Number(badDays) || 0,
       method,
       startDate: fromDateInput(date),
-      status: "active",
-    });
-    onClose();
-    onCreated?.(loan.id);
+    };
+    if (editLoan) {
+      updateLoan(editLoan.id, payload);
+      onClose();
+    } else {
+      const loan = addLoan({
+        ...payload,
+        customerId: customer.id,
+        lineId: activeLine.id,
+        status: "active",
+      });
+      onClose();
+      onCreated?.(loan.id);
+    }
   }
 
   if (!activeLine) return null;
@@ -107,14 +136,14 @@ export function LoanSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title={t("loan.new")}
+      title={editLoan ? t("loan.edit") || "Edit Loan" : t("loan.new")}
       footer={
         <div className="flex gap-3">
           <Button variant="outline" className="flex-1" onClick={() => setCalculated(true)}>
             {t("loan.calculate")}
           </Button>
           <Button className="flex-1" onClick={save} disabled={principal <= 0}>
-            {t("loan.addLoan")}
+            {editLoan ? t("common.save") : t("loan.addLoan")}
           </Button>
         </div>
       }
