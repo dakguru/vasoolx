@@ -49,7 +49,7 @@ export function PaymentSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title="Edit Payment"
+      title={t("pay.editPayment") || "Edit Payment"}
       footer={
         <Button full size="lg" onClick={save} disabled={!amount}>
           {t("common.save")}
@@ -58,7 +58,7 @@ export function PaymentSheet({
     >
       <div className="flex flex-col gap-4">
         <div>
-          <Label>Amount Collected</Label>
+          <Label>{t("pay.amountCollected") || "Amount Collected"}</Label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]">
               ₹

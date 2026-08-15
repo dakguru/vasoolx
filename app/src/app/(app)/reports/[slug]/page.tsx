@@ -58,17 +58,17 @@ export default function ReportDetailPage() {
         data.payments
           .filter((p) => inLine(p.lineId, lineId) && inRange(p.date, from, to))
           .forEach((p) => {
-            const k = fmtDate(p.date);
+            const k = p.date.slice(0, 10);
             (days[k] ??= { collected: 0, given: 0 }).collected += p.amount;
           });
         data.loans
           .filter((l) => inLine(l.lineId, lineId) && inRange(l.startDate, from, to))
           .forEach((l) => {
-            const k = fmtDate(l.startDate);
+            const k = l.startDate.slice(0, 10);
             (days[k] ??= { collected: 0, given: 0 }).given += l.disbursed;
           });
         const entries = Object.entries(days).sort(
-          (a, b) => +new Date(a[0]) - +new Date(b[0])
+          (a, b) => a[0].localeCompare(b[0])
         );
         const collected = entries.reduce((s, [, v]) => s + v.collected, 0);
         const given = entries.reduce((s, [, v]) => s + v.given, 0);
@@ -79,10 +79,10 @@ export default function ReportDetailPage() {
             { label: t("common.total"), value: inr(collected - given), tone: "ink" },
           ],
           headers: [t("rep.date"), t("rep.collected"), t("rep.loanGiven")],
-          rows: entries.map(([d, v]) => [d, inr(v.collected), inr(v.given)]),
+          rows: entries.map(([d, v]) => [fmtDate(d), inr(v.collected), inr(v.given)]),
           csv: {
             headers: ["Date", "Collected", "Loan given"],
-            rows: entries.map(([d, v]) => [d, v.collected, v.given]),
+            rows: entries.map(([d, v]) => [fmtDate(d), v.collected, v.given]),
           },
         };
       }
@@ -234,7 +234,7 @@ export default function ReportDetailPage() {
         const investment = data.investments.filter((i) => inLine(i.lineId, lineId)).reduce((s, i) => s + i.amount, 0);
         const disbursed = loans.reduce((s, l) => s + l.disbursed, 0);
         const collected = data.payments.filter((p) => inLine(p.lineId, lineId)).reduce((s, p) => s + p.amount, 0);
-        const outstanding = loans.filter((l) => l.status === "active").reduce((s, l) => s + loanOutstanding(data, l), 0);
+        const outstanding = loans.filter((l) => l.status === "active" || l.status === "bad").reduce((s, l) => s + loanOutstanding(data, l), 0);
         const expenses = data.expenses.filter((e) => inLine(e.lineId, lineId)).reduce((s, e) => s + e.amount, 0);
         const expectedProfit = loans.reduce((s, l) => s + (loanTotalDue(l) - l.disbursed), 0) - expenses;
         const cashInHand = investment + collected - disbursed - expenses;

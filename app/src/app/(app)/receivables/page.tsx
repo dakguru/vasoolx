@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,6 +11,7 @@ import {
   Undo2,
   Download,
   Phone,
+  Search,
 } from "lucide-react";
 import { TopBar } from "@/components/shell/TopBar";
 import { Loader } from "@/components/ui/Loader";
@@ -57,9 +58,21 @@ function Inner() {
   const lineId = activeLine?.id ?? "";
   const now = Date.now();
 
+  const [q, setQ] = useState("");
+  const [filterAreaId, setFilterAreaId] = useState("");
+
+  const areas = data.areas.filter((a) => inLine(a.lineId, lineId));
+
   const activeLoans = useMemo(
-    () => data.loans.filter((l) => inLine(l.lineId, lineId) && l.status === "active"),
-    [data, lineId]
+    () => data.loans.filter((l) => {
+      if (!inLine(l.lineId, lineId) || l.status !== "active") return false;
+      const cust = data.customers.find((c) => c.id === l.customerId);
+      if (!cust) return false;
+      if (q && !cust.name.toLowerCase().includes(q.toLowerCase()) && !cust.phone.includes(q)) return false;
+      if (filterAreaId && cust.areaId !== filterAreaId) return false;
+      return true;
+    }),
+    [data, lineId, q, filterAreaId]
   );
   const custName = (id: string) => data.customers.find((c) => c.id === id)?.name ?? "—";
   const custArea = (id: string) => areaName(data, data.customers.find((c) => c.id === id)?.areaId ?? null) ?? "—";
@@ -114,6 +127,17 @@ function Inner() {
           <StatTile label="Due Today" value={inrCompact(dueTotal)} icon={<CalendarClock size={16} />} color="var(--warn)" />
           <StatTile label="Overdue Accounts" value={String(overdueRows.length)} icon={<AlertTriangle size={16} />} color="var(--crit)" />
           <StatTile label="90+ Days" value={inrCompact(aging.d90p)} icon={<PieChart size={16} />} color="#f97316" />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[160px]">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer..." className="field-erp w-full h-9 pl-9 pr-3 text-[13px]" />
+          </div>
+          <select value={filterAreaId} onChange={(e) => setFilterAreaId(e.target.value)} className="field-erp h-9 px-2.5 text-[13px] appearance-none cursor-pointer min-w-40">
+            <option value="">All Areas</option>
+            {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
         </div>
 
         <div className="segtab w-fit flex-wrap">

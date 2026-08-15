@@ -10,6 +10,9 @@ export function AreaChart({
   data: { label: string; amount: number }[];
   height?: number;
 }) {
+  if (data.length === 0) {
+    return <div className="w-full" style={{ height }} />;
+  }
   const w = 320;
   const pad = 8;
   const max = Math.max(1, ...data.map((d) => d.amount));

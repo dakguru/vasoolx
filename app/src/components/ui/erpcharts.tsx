@@ -126,7 +126,8 @@ export function SegmentDonut({
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--panel-3)" strokeWidth={stroke} />
         {segments.map((s, i) => {
           const frac = s.value / total;
-          const len = Math.max(0, frac * c - (frac > 0 ? gap : 0));
+          const segCount = segments.filter((s) => s.value > 0).length;
+          const len = Math.max(0, frac * c - (frac > 0 && segCount > 1 ? gap : 0));
           const el = (
             <circle
               key={i}

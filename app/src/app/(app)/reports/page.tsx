@@ -25,6 +25,7 @@ import { Panel, PageHead, PanelHead, StatusBadge } from "@/components/ui/erp";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { fmtDate } from "@/lib/format";
+import { csvExport } from "@/lib/report";
 
 export default function ReportsPage() {
   return (
@@ -60,11 +61,7 @@ function Inner() {
     { Icon: BookOpen, name: "General Ledger", count: `${data.investments.length + data.expenses.length} entries`, color: "var(--crit)" },
   ];
 
-  const recentExports = [
-    { name: "Collections — August 2026", type: "CSV", when: new Date().toISOString() },
-    { name: "Customer Master", type: "Excel", when: new Date(Date.now() - 86400000).toISOString() },
-    { name: "Outstanding Report", type: "PDF", when: new Date(Date.now() - 3 * 86400000).toISOString() },
-  ];
+  const recentExports: { name: string; type: string; when: string }[] = [];
 
   return (
     <>
@@ -102,7 +99,10 @@ function Inner() {
                   <div><div className="font-bold text-[color:var(--text)]">{d.name}</div><div className="text-[11px] text-[color:var(--text-faint)] tabular">{d.count}</div></div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-[color:var(--line)] pt-3">
-                  <ExportBtn Icon={FileSpreadsheet} label="CSV" />
+                  <ExportBtn Icon={FileSpreadsheet} label="CSV" onClick={() => {
+                    if (d.name === "Customer Master") csvExport("customer-master", ["Name", "Phone", "Area"], data.customers.map((c) => [c.name, c.phone, data.areas.find((a) => a.id === c.areaId)?.name ?? ""]));
+                    else if (d.name === "Collections") csvExport("collections", ["Date", "Customer", "Amount", "Method"], data.payments.map((p) => [p.date.slice(0, 10), data.customers.find((c) => c.id === p.customerId)?.name ?? "", p.amount, p.method]));
+                  }} />
                   <ExportBtn Icon={FileType} label="Excel" />
                   <ExportBtn Icon={FileText} label="PDF" />
                 </div>
@@ -112,21 +112,25 @@ function Inner() {
 
           <Panel className="overflow-hidden">
             <PanelHead title="Recent Exports" desc="Your export history" icon={<Download size={15} />} />
-            <div className="overflow-x-auto">
-              <table className="dt">
-                <thead><tr><th>Export</th><th>Format</th><th>Generated</th><th>Status</th></tr></thead>
-                <tbody>
-                  {recentExports.map((e, i) => (
-                    <tr key={i}>
-                      <td className="font-semibold">{e.name}</td>
-                      <td><StatusBadge tone="info" dot={false}>{e.type}</StatusBadge></td>
-                      <td className="tabular text-[color:var(--text-soft)]">{fmtDate(e.when)}</td>
-                      <td><StatusBadge tone="ok">Ready</StatusBadge></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              {recentExports.length === 0 ? (
+                <div className="px-4 py-10 text-center text-[13px] text-[color:var(--text-faint)]">No exports yet. Use the export buttons above to generate your first export.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="dt">
+                    <thead><tr><th>Export</th><th>Format</th><th>Generated</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {recentExports.map((e, i) => (
+                        <tr key={i}>
+                          <td className="font-semibold">{e.name}</td>
+                          <td><StatusBadge tone="info" dot={false}>{e.type}</StatusBadge></td>
+                          <td className="tabular text-[color:var(--text-soft)]">{fmtDate(e.when)}</td>
+                          <td><StatusBadge tone="ok">Ready</StatusBadge></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
           </Panel>
         </main>
       )}
@@ -134,8 +138,8 @@ function Inner() {
   );
 }
 
-function ExportBtn({ Icon, label }: { Icon: typeof FileText; label: string }) {
+function ExportBtn({ Icon, label, onClick }: { Icon: typeof FileText; label: string; onClick?: () => void }) {
   return (
-    <button className="chip justify-center h-8 text-[11.5px]"><Icon size={13} /> {label}</button>
+    <button className="chip justify-center h-8 text-[11.5px]" onClick={onClick}><Icon size={13} /> {label}</button>
   );
 }

@@ -24,6 +24,8 @@ export default function LoginPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!email.trim()) return setError(t("auth.emailRequired") || "Email is required");
+    if (!password) return setError(t("auth.passwordRequired") || "Password is required");
     setLoading(true);
     const res = await signIn(email.trim(), password);
     setLoading(false);

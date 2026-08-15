@@ -133,10 +133,12 @@ function CollectInner() {
   }
   function collectRow(loanId: string, due: number, customerId: string) {
     if (!activeLine) return;
+    const customAmount = Number(entries[loanId]) || 0;
+    const amount = customAmount > 0 ? customAmount : due;
     const ln = data.loans.find((l) => l.id === loanId)?.lineId ?? activeLine.id;
-    addPayment({ loanId, customerId, lineId: ln, amount: due, date: dateIso, method, note: "" });
+    addPayment({ loanId, customerId, lineId: ln, amount, date: dateIso, method, note: "" });
     setEntries((e) => { const next = { ...e }; delete next[loanId]; return next; });
-    setToast(t("col.submitted", { n: 1, amt: inr(due) }));
+    setToast(t("col.submitted", { n: 1, amt: inr(amount) }));
     setTimeout(() => setToast(null), 2000);
   }
 

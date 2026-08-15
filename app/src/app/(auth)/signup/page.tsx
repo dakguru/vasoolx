@@ -26,6 +26,8 @@ export default function SignupPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!name.trim()) return setError(t("auth.nameRequired") || "Name is required");
+    if (!email.trim()) return setError(t("auth.emailRequired") || "Email is required");
     if (password !== confirm) return setError("Passwords do not match");
     if (password.length < 6) return setError("Password must be at least 6 characters");
     setLoading(true);

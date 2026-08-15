@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Panel } from "@/components/ui/erp";
-import { toDateInput } from "@/lib/format";
+import { toDateInput, fromDateInput } from "@/lib/format";
 import { daysAgoISO, startOfMonthISO } from "@/lib/report";
 import { useI18n } from "@/lib/i18n/provider";
 
@@ -32,7 +32,7 @@ export function DateRangeBar({
           <input
             type="date"
             value={toDateInput(from)}
-            onChange={(e) => setFrom(new Date(e.target.value).toISOString())}
+            onChange={(e) => setFrom(fromDateInput(e.target.value))}
             className="field-erp h-9 px-3 text-[13px] block mt-1 tabular"
           />
         </div>
@@ -41,7 +41,7 @@ export function DateRangeBar({
           <input
             type="date"
             value={toDateInput(to)}
-            onChange={(e) => setTo(new Date(e.target.value).toISOString())}
+            onChange={(e) => setTo(fromDateInput(e.target.value))}
             className="field-erp h-9 px-3 text-[13px] block mt-1 tabular"
           />
         </div>
@@ -102,6 +102,8 @@ export function DataTable({
   const [page, setPage] = useState(0);
   const totalPages = Math.ceil(rows.length / PAGE_SIZE);
   const paged = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  useEffect(() => { setPage(0); }, [rows.length]);
 
   if (rows.length === 0) {
     return (

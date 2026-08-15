@@ -55,6 +55,7 @@ export function CustomerSheet({
         sortOrder: Number(sortOrder) || 0,
         address,
         notes,
+        photoUrl: editing.photoUrl ?? null,
       });
     } else {
       addCustomer({

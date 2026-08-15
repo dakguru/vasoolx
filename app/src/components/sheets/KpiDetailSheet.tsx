@@ -60,7 +60,7 @@ export function KpiDetailSheet({
     const loans = data.loans.filter(
       (l) =>
         l.lineId === lineId &&
-        (kind === "overdue" ? l.status === "bad" : l.status === "active")
+        (kind === "overdue" ? l.status === "bad" : (l.status === "active" || l.status === "bad"))
     );
     const withCalc = loans
       .map((l) => ({ l, paid: loanPaid(data, l.id), out: loanOutstanding(data, l) }))

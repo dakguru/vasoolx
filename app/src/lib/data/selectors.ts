@@ -40,7 +40,12 @@ export function loanSchedule(data: AppData, loan: Loan): Installment[] {
     const d = new Date(start);
     if (loan.type === "daily") d.setDate(start.getDate() + i);
     else if (loan.type === "weekly") d.setDate(start.getDate() + i * 7);
-    else d.setMonth(start.getMonth() + i);
+    else {
+      d.setDate(1);
+      d.setMonth(start.getMonth() + i);
+      const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(start.getDate(), lastDay));
+    }
 
     const instAmount = loan.installmentAmount;
     const paidForThis = Math.min(instAmount, Math.max(0, remaining));
@@ -94,9 +99,9 @@ export interface LineStats {
 }
 
 export function lineStats(data: AppData, lineId: string): LineStats {
-  const today = new Date().toISOString();
+  const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12).toISOString();
   const loans = data.loans.filter((l) => inLine(l.lineId, lineId));
-  const active = loans.filter((l) => l.status === "active");
+  const active = loans.filter((l) => l.status === "active" || l.status === "bad");
   const collectedToday = data.payments
     .filter((p) => inLine(p.lineId, lineId) && sameDay(p.date, today))
     .reduce((s, p) => s + p.amount, 0);
@@ -159,7 +164,7 @@ export function collectionByArea(
   lineId: string
 ): { areaId: string; name: string; amount: number; customers: number }[] {
   const areas = data.areas.filter((a) => inLine(a.lineId, lineId));
-  const today = new Date().toISOString();
+  const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12).toISOString();
   const custArea = new Map(data.customers.map((c) => [c.id, c.areaId] as const));
   const rows = areas.map((a) => {
     const amount = data.payments
@@ -209,7 +214,7 @@ export function agingBuckets(data: AppData, lineId: string): AgingBuckets {
     d90p: 0,
     total: 0,
   };
-  const active = data.loans.filter((l) => inLine(l.lineId, lineId) && l.status === "active");
+  const active = data.loans.filter((l) => inLine(l.lineId, lineId) && (l.status === "active" || l.status === "bad"));
   for (const loan of active) {
     const outstanding = loanOutstanding(data, loan);
     if (outstanding <= 0) continue;
@@ -430,15 +435,17 @@ export function collectionRate(data: AppData, lineId: string): number {
 
 // Amount due today across active loans (next-due installment on/for today).
 export function dueToday(data: AppData, lineId: string): number {
-  const today = new Date().toISOString();
+  const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12).toISOString();
   let sum = 0;
   const active = data.loans.filter((l) => inLine(l.lineId, lineId) && l.status === "active");
   for (const loan of active) {
     const sched = loanSchedule(data, loan);
-    const due = sched.find(
+    const dueInstallments = sched.filter(
       (s) => s.status !== "paid" && +new Date(s.dueDate) <= +new Date(today)
     );
-    if (due) sum += due.amount - due.paidAmount;
+    for (const due of dueInstallments) {
+      sum += due.amount - due.paidAmount;
+    }
   }
   return sum;
 }

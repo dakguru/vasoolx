@@ -101,7 +101,7 @@ export function LineSheet({
           <div>
             <Label>{t("line.interestRate")}</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]">₹</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]">%</span>
               <Input
                 type="number"
                 value={interestRate}
@@ -113,7 +113,7 @@ export function LineSheet({
           <div>
             <Label>{t("line.processingFees")}</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]">₹</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]">%</span>
               <Input
                 type="number"
                 value={processingFees}

@@ -165,7 +165,7 @@ export default function DashboardPage() {
     { label: "Create Route", Icon: Route, color: "#7c6bf0", href: "/areas" },
     { label: "Import Data", Icon: UploadCloud, color: "var(--brand)", href: "/lines" },
     { label: "Generate Report", Icon: FileBarChart, color: "var(--warn)", href: "/reports" },
-    { label: "Reconcile", Icon: Scale, color: "var(--ok)", href: "/finance?tab=recon" },
+    { label: "Reconcile", Icon: Scale, color: "var(--ok)", href: "/finance" },
     { label: "Export Data", Icon: Download, color: "var(--muted)", href: "/reports?tab=export" },
   ];
 
@@ -296,7 +296,7 @@ export default function DashboardPage() {
           <Panel className="xl:col-span-4 flex flex-col">
             <PanelHead
               title="Outstanding Aging"
-              action={<Link href="/finance?tab=aging" className="text-[12px] font-semibold text-[color:var(--brand)]">View Report</Link>}
+              action={<Link href="/receivables?view=aging" className="text-[12px] font-semibold text-[color:var(--brand)]">View Report</Link>}
             />
             <div className="p-4 flex items-center gap-4 flex-1">
               <SegmentDonut
@@ -323,7 +323,7 @@ export default function DashboardPage() {
           <Panel className="xl:col-span-4 flex flex-col overflow-hidden">
             <PanelHead
               title="Top Performing Agents"
-              action={<Link href="/reports?tab=agents" className="text-[12px] font-semibold text-[color:var(--brand)]">View All</Link>}
+              action={<Link href="/users" className="text-[12px] font-semibold text-[color:var(--brand)]">View All</Link>}
             />
             <div className="overflow-x-auto flex-1">
               <table className="dt">

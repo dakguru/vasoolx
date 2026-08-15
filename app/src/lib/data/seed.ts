@@ -89,16 +89,16 @@ export function buildSeed(): AppData {
     }
     if (l.status === "bad") continue;
     for (let d = 9; d >= 0; d--) {
-      // occasional missed day
-      if (Math.random() < 0.15) continue;
+      // skip every 7th day deterministically
+      if (d % 7 === 3) continue;
       payments.push({
-        id: uid("pay"),
+        id: `pay_${l.id}_d${d}`,
         loanId: l.id,
         customerId: l.customerId,
         lineId,
         amount: l.installmentAmount,
         date: iso(d),
-        method: Math.random() < 0.2 ? "online" : "cash",
+        method: d % 5 === 0 ? "online" : "cash",
         note: "",
       });
     }
@@ -168,9 +168,9 @@ export function buildSeed(): AppData {
     ],
     members: [],
     profile: {
-      name: "sarun",
-      email: "arun18@live.in",
-      phone: "7904478591",
+      name: "Demo User",
+      email: "demo@vasoolx.app",
+      phone: "9876543210",
     },
     activeLineId: lineId,
   };

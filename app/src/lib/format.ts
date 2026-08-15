@@ -13,7 +13,8 @@ export function inrCompact(amount: number): string {
 }
 
 export function fmtDate(iso: string, locale = "en-IN"): string {
-  const d = new Date(iso);
+  const parts = iso.slice(0, 10).split("-");
+  const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
   return d.toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
@@ -22,12 +23,17 @@ export function fmtDate(iso: string, locale = "en-IN"): string {
 }
 
 export function fmtDateShort(iso: string): string {
-  const d = new Date(iso);
+  const parts = iso.slice(0, 10).split("-");
+  const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
   return d.toLocaleDateString("en-GB"); // dd/mm/yyyy
 }
 
 export function toDateInput(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export function fromDateInput(v: string): string {

@@ -104,9 +104,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const update = useCallback(
     (fn: (d: AppData) => AppData) => {
-      persist(fn(data));
+      setData((prev) => {
+        const next = fn(prev);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch { /* ignore quota */ }
+        return next;
+      });
     },
-    [data, persist]
+    []
   );
 
   const setActiveLine = useCallback(
@@ -117,14 +123,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addLine: StoreContextValue["addLine"] = useCallback(
     (l) => {
       const line: Line = { ...l, id: uid("line"), createdAt: new Date().toISOString() };
-      persist({
-        ...data,
-        lines: [...data.lines, line],
-        activeLineId: data.activeLineId ?? line.id,
-      });
+      update((d) => ({
+        ...d,
+        lines: [...d.lines, line],
+        activeLineId: d.activeLineId ?? line.id,
+      }));
       return line;
     },
-    [data, persist]
+    [update]
   );
 
   const updateLine: StoreContextValue["updateLine"] = useCallback(
@@ -138,13 +144,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const deleteLine: StoreContextValue["deleteLine"] = useCallback(
     (id) => {
-      // Block deletion if there are active loans on this line
-      const hasActiveLoans = data.loans.some(
-        (l) => l.lineId === id && l.status === "active"
-      );
-      if (hasActiveLoans) return false;
-
+      let ok = false;
       update((d) => {
+        const hasActiveLoans = d.loans.some(
+          (l) => l.lineId === id && (l.status === "active" || l.status === "bad")
+        );
+        if (hasActiveLoans) return d;
+        ok = true;
         const lines = d.lines.filter((l) => l.id !== id);
         return {
           ...d,
@@ -159,9 +165,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             d.activeLineId === id ? lines[0]?.id ?? null : d.activeLineId,
         };
       });
-      return true;
+      return ok;
     },
-    [data.loans, update]
+    [update]
   );
 
   const addArea: StoreContextValue["addArea"] = useCallback(
@@ -211,21 +217,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const deleteCustomer: StoreContextValue["deleteCustomer"] = useCallback(
     (id) => {
-      // Block deletion if the customer has active loans
-      const hasActiveLoans = data.loans.some(
-        (l) => l.customerId === id && l.status === "active"
-      );
-      if (hasActiveLoans) return false;
-
-      update((d) => ({
-        ...d,
-        customers: d.customers.filter((c) => c.id !== id),
-        loans: d.loans.filter((l) => l.customerId !== id),
-        payments: d.payments.filter((p) => p.customerId !== id),
-      }));
-      return true;
+      let ok = false;
+      update((d) => {
+        const hasActiveLoans = d.loans.some(
+          (l) => l.customerId === id && (l.status === "active" || l.status === "bad")
+        );
+        if (hasActiveLoans) return d;
+        ok = true;
+        return {
+          ...d,
+          customers: d.customers.filter((c) => c.id !== id),
+          loans: d.loans.filter((l) => l.customerId !== id),
+          payments: d.payments.filter((p) => p.customerId !== id),
+        };
+      });
+      return ok;
     },
-    [data.loans, update]
+    [update]
   );
 
   const addLoan: StoreContextValue["addLoan"] = useCallback(
@@ -274,7 +282,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const loan = d.loans.find((l) => l.id === p.loanId);
         const line = loan ? d.lines.find((ln) => ln.id === loan.lineId) : null;
         let updatedLoans = d.loans;
-        if (loan && loan.status === "active" && line && !line.closeLoanManually) {
+        if (loan && (loan.status === "active" || loan.status === "bad") && line && !line.closeLoanManually) {
           const totalPaid = newPayments
             .filter((pay) => pay.loanId === loan.id)
             .reduce((s, pay) => s + pay.amount, 0);
@@ -303,9 +311,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             .filter((pay) => pay.loanId === loan.id)
             .reduce((s, pay) => s + pay.amount, 0);
           const totalDue = loan.installmentAmount * loan.installments;
-          const status = totalPaid >= totalDue ? "closed" : "active";
+          const newStatus = totalPaid >= totalDue ? "closed" : (loan.status === "bad" ? "bad" : "active");
           updatedLoans = d.loans.map((l) =>
-            l.id === loan.id ? { ...l, status } : l
+            l.id === loan.id ? { ...l, status: newStatus } : l
           );
         }
         return { ...d, payments: newPayments, loans: updatedLoans };
@@ -328,9 +336,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             .filter((pay) => pay.loanId === loan.id)
             .reduce((s, pay) => s + pay.amount, 0);
           const totalDue = loan.installmentAmount * loan.installments;
-          const status = totalPaid >= totalDue ? "closed" : "active";
+          const newStatus = totalPaid >= totalDue ? "closed" : (loan.status === "bad" ? "bad" : "active");
           updatedLoans = d.loans.map((l) =>
-            l.id === loan.id ? { ...l, status } : l
+            l.id === loan.id ? { ...l, status: newStatus } : l
           );
         }
         return { ...d, payments: newPayments, loans: updatedLoans };

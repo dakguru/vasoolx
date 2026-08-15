@@ -33,6 +33,7 @@ export function LoanSheet({
   const [badDays, setBadDays] = useState("15");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [calculated, setCalculated] = useState(false);
+  const isEditing = !!editLoan;
 
   useEffect(() => {
     if (open && activeLine) {
@@ -80,12 +81,12 @@ export function LoanSheet({
         : Math.max(1, periodDays); // daily
 
   const totalRepay = principal + interestAmt;
-  const installmentAmount = Math.round(totalRepay / installmentCount);
+  const installmentAmount = Math.ceil(totalRepay / installmentCount);
   const cashOnHand = Math.max(0, principal - processingN);
 
   // Auto-suggest interest from line rate when amount changes
   useEffect(() => {
-    if (open && activeLine && amount) {
+    if (open && activeLine && amount && !editLoan) {
       const suggested = Math.round((Number(amount) || 0) * (activeLine.interestRate / 100));
       setInterest(String(suggested));
     }
@@ -94,7 +95,7 @@ export function LoanSheet({
 
   // Auto-suggest processing fees from line rate when amount changes
   useEffect(() => {
-    if (open && activeLine && amount) {
+    if (open && activeLine && amount && !editLoan) {
       const suggested = Math.round((Number(amount) || 0) * (activeLine.processingFees / 100));
       setProcessing(String(suggested));
     }
@@ -184,7 +185,7 @@ export function LoanSheet({
             <MoneyInput value={interest} onChange={setInterest} />
           </div>
           <div>
-            <Label required>{t("loan.loanPeriod")}</Label>
+            <Label required>{t("loan.loanPeriod")} ({t("common.days") || "Days"})</Label>
             <Input type="number" value={period} onChange={(e) => setPeriod(e.target.value)} />
           </div>
           <div>
