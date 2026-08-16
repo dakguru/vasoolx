@@ -37,12 +37,15 @@ export function loanSchedule(data: AppData, loan: Loan): Installment[] {
   const out: Installment[] = [];
   const start = new Date(loan.startDate);
   for (let i = 0; i < loan.installments; i++) {
+    // Installment n falls one full period after the disbursement date, so the
+    // first repayment is never due on the day the loan is issued.
+    const n = i + 1;
     const d = new Date(start);
-    if (loan.type === "daily") d.setDate(start.getDate() + i);
-    else if (loan.type === "weekly") d.setDate(start.getDate() + i * 7);
+    if (loan.type === "daily") d.setDate(start.getDate() + n);
+    else if (loan.type === "weekly") d.setDate(start.getDate() + n * 7);
     else {
       d.setDate(1);
-      d.setMonth(start.getMonth() + i);
+      d.setMonth(start.getMonth() + n);
       const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
       d.setDate(Math.min(start.getDate(), lastDay));
     }
