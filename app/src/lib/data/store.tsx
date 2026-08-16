@@ -100,11 +100,19 @@ type StoreContextValue = {
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
-// Fire-and-forget a Supabase write, surfacing failures to the console so a
-// rejected RLS policy or network error is visible during development.
+// Background Supabase writes run through ONE sequential queue so a parent row
+// (line, loan, customer) always lands before a child that references it (area,
+// payment, loan). Firing them in parallel let a child's insert reach Postgres
+// first, fail its foreign key, and get silently dropped — the cause of "some
+// data not syncing". Supabase query builders are lazy (they execute when first
+// awaited), so deferring `.then()` here also defers the request itself.
+let writeQueue: Promise<unknown> = Promise.resolve();
 function sync(p: PromiseLike<{ error: { message: string } | null }>) {
-  Promise.resolve(p)
-    .then(({ error }) => {
+  writeQueue = writeQueue
+    .catch(() => {})
+    .then(() => p)
+    .then((res) => {
+      const error = (res as { error?: { message: string } | null } | undefined)?.error;
       if (error) console.error("[vasoolx sync]", error.message);
     })
     .catch((e) => console.error("[vasoolx sync]", e));
