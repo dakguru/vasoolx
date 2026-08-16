@@ -8,7 +8,6 @@ import {
   ClipboardList,
   MapPin,
   History,
-  Navigation,
   CheckCircle2,
   Clock,
   Download,
@@ -20,7 +19,6 @@ import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { inLine } from "@/lib/data/selectors";
 import {
-  agentPerformance,
   collectionByArea,
   customerActiveLoan,
   loanOutstanding,
@@ -60,7 +58,6 @@ function Inner() {
     const m = data.members.filter((x) => inLine(x.lineId, lineId));
     return m.length ? m : [{ id: "self", name: data.profile.name || "You", accessType: "agent" }];
   }, [data, lineId]);
-  const agents = useMemo(() => agentPerformance(data, lineId), [data, lineId]);
   const byArea = useMemo(() => collectionByArea(data, lineId), [data, lineId]);
 
   const custByArea = (areaId: string) => data.customers.filter((c) => inLine(c.lineId, lineId) && c.areaId === areaId);
@@ -83,22 +80,9 @@ function Inner() {
   const collectedToday = byArea.reduce((s, a) => s + a.amount, 0);
 
   function exportCsv() {
-    if (view === "agents") {
-      csvExport("vasoolx-agents", ["Agent", "Role", "Target", "Collected", "Achievement %", "Visits"],
-        agents.map((a) => [a.name, a.accessType, a.target, a.collected, Math.round(a.achievement * 100), a.visits]));
-      return;
-    }
     csvExport("vasoolx-routes", ["Route / Area", "Customers", "Expected", "Collected"],
       areas.map((a) => [a.name, custByArea(a.id).length, expectedForArea(a.id), byArea.find((b) => b.areaId === a.id)?.amount ?? 0]));
   }
-
-  // deterministic pseudo-positions for tracking map
-  const markers = members.map((m, i) => ({
-    id: m.id, name: m.name,
-    x: 12 + ((i * 27 + 15) % 76),
-    y: 14 + ((i * 41 + 20) % 68),
-    active: i % 3 !== 0,
-  }));
 
   return (
     <>
@@ -152,26 +136,7 @@ function Inner() {
         )}
 
         {view === "agents" && (
-          <Panel className="overflow-hidden">
-            <PanelHead title={t("fld.agentsPerf")} desc={t("fld.agentsCount", { n: agents.length })} />
-            <div className="overflow-x-auto">
-              <table className="dt">
-                <thead><tr><th>{t("dash.agent")}</th><th>{t("fld.thRole")}</th><th className="text-right">{t("dash.thTarget")}</th><th className="text-right">{t("col.collected")}</th><th>{t("dash.thAchievement")}</th><th className="text-right">{t("fld.thVisits")}</th></tr></thead>
-                <tbody>
-                  {agents.map((a) => (
-                    <tr key={a.id}>
-                      <td><div className="flex items-center gap-2.5"><span className="w-7 h-7 rounded-full grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)] font-bold text-[11px] shrink-0">{a.name.charAt(0).toUpperCase()}</span><span className="font-semibold">{a.name}</span></div></td>
-                      <td><StatusBadge tone={a.accessType === "partner" ? "info" : "neutral"} dot={false}>{a.accessType}</StatusBadge></td>
-                      <td className="text-right tabular text-[color:var(--text-soft)]">{inr(a.target)}</td>
-                      <td className="text-right tabular font-semibold">{inr(a.collected)}</td>
-                      <td><div className="flex items-center gap-2"><div className="w-16"><ProgressBar value={a.achievement} color={a.achievement >= 0.9 ? "var(--ok)" : a.achievement >= 0.7 ? "var(--warn)" : "var(--crit)"} /></div><span className="text-[11px] tabular w-8">{Math.round(a.achievement * 100)}%</span></div></td>
-                      <td className="text-right tabular">{a.visits}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
+          <ComingSoon icon={<Users size={26} />} title={t("fld.comingSoon")} desc={t("fld.agentsSoon")} />
         )}
 
         {view === "assignments" && (
@@ -204,42 +169,7 @@ function Inner() {
         )}
 
         {view === "tracking" && (
-          <div className="grid gap-4 xl:grid-cols-[1fr_280px] items-start">
-            <Panel className="overflow-hidden">
-              <PanelHead title={t("fld.liveTracking")} desc={t("fld.liveTrackingDesc")} icon={<Navigation size={15} />} />
-              <div className="relative m-4 rounded-xl overflow-hidden border border-[color:var(--line)]" style={{ height: 360, background: "linear-gradient(135deg, color-mix(in srgb, var(--brand) 8%, var(--panel-2)), var(--panel-2))" }}>
-                {/* grid streets */}
-                <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.5 }}>
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <line key={`h${i}`} x1="0" y1={`${(i + 1) * 11}%`} x2="100%" y2={`${(i + 1) * 11}%`} stroke="var(--line)" strokeWidth="1" />
-                  ))}
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <line key={`v${i}`} x1={`${(i + 1) * 9}%`} y1="0" x2={`${(i + 1) * 9}%`} y2="100%" stroke="var(--line)" strokeWidth="1" />
-                  ))}
-                </svg>
-                {markers.map((mk) => (
-                  <div key={mk.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: `${mk.x}%`, top: `${mk.y}%` }}>
-                    <span className={`w-8 h-8 rounded-full grid place-items-center text-white text-[11px] font-bold shadow-lg ring-2 ring-[color:var(--panel)] ${mk.active ? "bg-[color:var(--ok)]" : "bg-[color:var(--text-faint)]"}`}>
-                      {mk.name.charAt(0).toUpperCase()}
-                    </span>
-                    <span className="mt-1 px-1.5 py-0.5 rounded-md bg-[color:var(--panel)] border border-[color:var(--line)] text-[10px] font-semibold shadow-sm whitespace-nowrap">{mk.name}</span>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-            <Panel>
-              <PanelHead title={t("fld.agentsOnline")} />
-              <div className="divide-y divide-[color:var(--line)]">
-                {markers.map((mk) => (
-                  <div key={mk.id} className="flex items-center gap-2.5 px-4 py-2.5">
-                    <span className="w-8 h-8 rounded-full grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)] font-bold text-[11px]">{mk.name.charAt(0).toUpperCase()}</span>
-                    <span className="flex-1 text-[13px] font-medium">{mk.name}</span>
-                    <StatusBadge tone={mk.active ? "ok" : "neutral"}>{mk.active ? t("fld.onRoute") : t("fld.idle")}</StatusBadge>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          </div>
+          <ComingSoon icon={<MapPin size={26} />} title={t("fld.comingSoon")} desc={t("fld.trackingSoon")} />
         )}
 
         {view === "visits" && (
@@ -269,5 +199,29 @@ function Inner() {
         )}
       </main>
     </>
+  );
+}
+
+// Placeholder for field features that require data not yet captured
+// (per-agent attribution, GPS location). Shown instead of fabricated data.
+function ComingSoon({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <Panel>
+      <div className="flex flex-col items-center justify-center text-center gap-3 py-16 px-6">
+        <span className="w-14 h-14 rounded-2xl grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
+          {icon}
+        </span>
+        <div className="text-lg font-bold text-[color:var(--text)]">{title}</div>
+        <p className="text-sm text-[color:var(--text-soft)] max-w-sm">{desc}</p>
+      </div>
+    </Panel>
   );
 }

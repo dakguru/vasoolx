@@ -42,7 +42,6 @@ import {
   Trend,
   Sparkline,
   BarList,
-  ProgressBar,
   DonutRing,
   SeverityTag,
   AutoStatus,
@@ -59,7 +58,6 @@ import {
   collectionTrend,
   collectionByArea,
   agingBuckets,
-  agentPerformance,
   recentTransactions,
   exceptions,
   collectionTarget,
@@ -98,7 +96,6 @@ export default function DashboardPage() {
   );
   const byArea = useMemo(() => (activeLine ? collectionByArea(data, lineId) : []), [data, lineId, activeLine]);
   const aging = useMemo(() => (activeLine ? agingBuckets(data, lineId) : null), [data, lineId, activeLine]);
-  const agents = useMemo(() => (activeLine ? agentPerformance(data, lineId) : []), [data, lineId, activeLine]);
   const recent = useMemo(() => (activeLine ? recentTransactions(data, lineId, 6) : []), [data, lineId, activeLine]);
   const alerts = useMemo(() => (activeLine ? exceptions(data, lineId) : []), [data, lineId, activeLine]);
   const target = activeLine ? collectionTarget(data, lineId) : 0;
@@ -325,39 +322,14 @@ export default function DashboardPage() {
               title={t("dash.topAgents")}
               action={<Link href="/users" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewAll")}</Link>}
             />
-            <div className="overflow-x-auto flex-1">
-              <table className="dt">
-                <thead>
-                  <tr>
-                    <th>{t("dash.agent")}</th>
-                    <th className="text-right">{t("dash.thTarget")}</th>
-                    <th className="text-right">{t("dash.thCollected")}</th>
-                    <th>{t("dash.thAchievement")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agents.slice(0, 5).map((a) => (
-                    <tr key={a.id}>
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)] text-[10px] font-bold shrink-0">
-                            {a.name.charAt(0).toUpperCase()}
-                          </span>
-                          <span className="font-medium truncate max-w-[90px]">{a.name}</span>
-                        </div>
-                      </td>
-                      <td className="text-right tabular text-[color:var(--text-soft)]">{inrCompact(a.target)}</td>
-                      <td className="text-right tabular font-semibold">{inrCompact(a.collected)}</td>
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <div className="w-14"><ProgressBar value={a.achievement} color={a.achievement >= 0.9 ? "var(--ok)" : a.achievement >= 0.7 ? "var(--warn)" : "var(--crit)"} /></div>
-                          <span className="tabular text-[11px] font-semibold text-[color:var(--text-soft)] w-9">{Math.round(a.achievement * 100)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Per-agent performance needs real agent attribution (not yet
+                captured). Show a placeholder instead of fabricated numbers. */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-10 px-6">
+              <span className="w-11 h-11 rounded-2xl grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
+                <CircleUserRound size={20} />
+              </span>
+              <div className="text-sm font-bold text-[color:var(--text)]">{t("fld.comingSoon")}</div>
+              <p className="text-[12px] text-[color:var(--text-soft)] max-w-[220px]">{t("fld.agentsSoon")}</p>
             </div>
           </Panel>
 
