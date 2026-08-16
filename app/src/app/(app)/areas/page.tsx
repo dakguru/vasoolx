@@ -8,14 +8,16 @@ import { Panel, PageHead, StatTile, ProgressBar, Toolbar } from "@/components/ui
 import { AreaSheet } from "@/components/sheets/AreaSheet";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
-import { inLine } from "@/lib/data/selectors";
+import { inLine, ALL_LINES } from "@/lib/data/selectors";
 
 export default function AreasPage() {
   const { t } = useI18n();
   const { data, activeLine, deleteArea } = useStore();
   const [sheet, setSheet] = useState(false);
 
+  const isAll = activeLine?.id === ALL_LINES;
   const areas = data.areas.filter((a) => inLine(a.lineId, activeLine?.id));
+  const lineName = (id: string) => data.lines.find((l) => l.id === id)?.name ?? "—";
   const countCustomers = (areaId: string) => data.customers.filter((c) => c.areaId === areaId).length;
   const totalCustomers = data.customers.filter((c) => inLine(c.lineId, activeLine?.id)).length;
   const maxCust = Math.max(1, ...areas.map((a) => countCustomers(a.id)));
@@ -57,7 +59,7 @@ export default function AreasPage() {
               <div className="overflow-x-auto">
                 <table className="dt">
                   <thead>
-                    <tr><th>{t("dash.area")}</th><th className="text-right">{t("fld.thCustomers")}</th><th>{t("area.coverage")}</th><th></th></tr>
+                    <tr><th>{t("dash.area")}</th>{isAll && <th>{t("rep.line")}</th>}<th className="text-right">{t("fld.thCustomers")}</th><th>{t("area.coverage")}</th><th></th></tr>
                   </thead>
                   <tbody>
                     {areas.map((a) => {
@@ -70,6 +72,7 @@ export default function AreasPage() {
                               <span className="font-semibold text-[color:var(--text)]">{a.name}</span>
                             </div>
                           </td>
+                          {isAll && <td className="text-[color:var(--text-soft)]">{lineName(a.lineId)}</td>}
                           <td className="text-right tabular font-semibold">{n}</td>
                           <td>
                             <div className="w-40"><ProgressBar value={n / maxCust} /></div>

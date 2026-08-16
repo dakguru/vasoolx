@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button, Input, Label, Segmented, Toggle } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
@@ -17,7 +18,7 @@ export function LineSheet({
   editing?: Line | null;
 }) {
   const { t } = useI18n();
-  const { addLine, updateLine } = useStore();
+  const { data, addLine, updateLine, addArea, deleteArea } = useStore();
 
   const [name, setName] = useState("");
   const [loanType, setLoanType] = useState<LoanType>("daily");
@@ -27,8 +28,11 @@ export function LineSheet({
   const [badLoanDays, setBadLoanDays] = useState("15");
   const [closeManual, setCloseManual] = useState(false);
   const [enableCustNo, setEnableCustNo] = useState(false);
+  const [areaList, setAreaList] = useState<string[]>([]);
+  const [areaInput, setAreaInput] = useState("");
 
   useEffect(() => {
+    setAreaInput("");
     if (editing) {
       setName(editing.name);
       setLoanType(editing.loanType);
@@ -38,6 +42,7 @@ export function LineSheet({
       setBadLoanDays(String(editing.badLoanDays));
       setCloseManual(editing.closeLoanManually);
       setEnableCustNo(editing.enableCustomerNumber);
+      setAreaList(data.areas.filter((a) => a.lineId === editing.id).map((a) => a.name));
     } else {
       setName("");
       setLoanType("daily");
@@ -47,8 +52,17 @@ export function LineSheet({
       setBadLoanDays("15");
       setCloseManual(false);
       setEnableCustNo(false);
+      setAreaList([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing, open]);
+
+  function addAreaToList() {
+    const v = areaInput.trim();
+    if (!v) return;
+    if (!areaList.some((a) => a.toLowerCase() === v.toLowerCase())) setAreaList([...areaList, v]);
+    setAreaInput("");
+  }
 
   function save() {
     if (!name.trim()) return;
@@ -62,8 +76,16 @@ export function LineSheet({
       closeLoanManually: closeManual,
       enableCustomerNumber: enableCustNo,
     };
-    if (editing) updateLine(editing.id, payload);
-    else addLine(payload);
+    const lineId = editing ? (updateLine(editing.id, payload), editing.id) : addLine(payload).id;
+
+    // Reconcile areas: add newly-listed names; on edit, remove ones taken off the list.
+    const wanted = areaList.map((a) => a.trim()).filter(Boolean);
+    const existing = data.areas.filter((a) => a.lineId === lineId);
+    const existingLower = new Set(existing.map((a) => a.name.trim().toLowerCase()));
+    const wantedLower = new Set(wanted.map((w) => w.toLowerCase()));
+    for (const w of wanted) if (!existingLower.has(w.toLowerCase())) addArea(w, lineId);
+    if (editing) for (const a of existing) if (!wantedLower.has(a.name.trim().toLowerCase())) deleteArea(a.id);
+
     onClose();
   }
 
@@ -138,6 +160,36 @@ export function LineSheet({
               onChange={(e) => setBadLoanDays(e.target.value)}
             />
           </div>
+        </div>
+
+        <div>
+          <Label>{t("line.areasOptional")}</Label>
+          <div className="flex gap-2">
+            <Input
+              value={areaInput}
+              onChange={(e) => setAreaInput(e.target.value)}
+              placeholder={t("area.areaNamePlaceholder")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); addAreaToList(); }
+              }}
+            />
+            <Button variant="outline" onClick={addAreaToList} disabled={!areaInput.trim()}>
+              {t("common.add")}
+            </Button>
+          </div>
+          {areaList.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {areaList.map((a, i) => (
+                <span key={`${a}-${i}`} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 bg-[color:var(--brand)]/10 text-[color:var(--brand)] text-[13px] font-medium">
+                  {a}
+                  <button type="button" aria-label="Remove" onClick={() => setAreaList(areaList.filter((_, idx) => idx !== i))} className="hover:opacity-70">
+                    <X size={13} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="mt-1.5 text-[12px] text-[color:var(--text-soft)]">{t("line.areasHint")}</p>
         </div>
 
         <div className="flex items-center justify-between">
