@@ -22,17 +22,21 @@ import { useStore } from "@/lib/data/store";
 import { LanguageSheet } from "@/components/shell/LanguageSwitcher";
 import { exceptions } from "@/lib/data/selectors";
 
-const CRUMBS: Record<string, { title: string; parent?: string }> = {
-  dashboard: { title: "Dashboard" },
-  customers: { title: "Customer Directory", parent: "Customers" },
-  collect: { title: "Collections", parent: "Operations" },
-  finance: { title: "Finance", parent: "Receivables" },
-  reports: { title: "Reports", parent: "Analytics" },
-  areas: { title: "Collection Routes", parent: "Field Operations" },
-  lines: { title: "Lines", parent: "Master Data" },
-  users: { title: "Users & Access", parent: "Administration" },
-  subscription: { title: "Subscription", parent: "Administration" },
-  settings: { title: "Settings", parent: "Administration" },
+const CRUMBS: Record<string, { titleKey: string; parentKey?: string }> = {
+  dashboard: { titleKey: "sb.dashboard" },
+  customers: { titleKey: "sb.customerDirectory", parentKey: "sb.customers" },
+  collect: { titleKey: "sb.collections", parentKey: "hdr.operations" },
+  receivables: { titleKey: "sb.receivables", parentKey: "hdr.operations" },
+  loans: { titleKey: "sb.loans", parentKey: "hdr.operations" },
+  field: { titleKey: "sb.field", parentKey: "hdr.operations" },
+  finance: { titleKey: "sb.finance", parentKey: "sb.receivables" },
+  reports: { titleKey: "sb.reports", parentKey: "hdr.analytics" },
+  areas: { titleKey: "sb.collectionRoutes", parentKey: "sb.field" },
+  lines: { titleKey: "sb.lines", parentKey: "sb.master" },
+  master: { titleKey: "sb.master" },
+  users: { titleKey: "sb.access", parentKey: "sb.admin" },
+  subscription: { titleKey: "sb.subscription", parentKey: "sb.admin" },
+  settings: { titleKey: "sb.settings", parentKey: "sb.admin" },
 };
 
 export function DesktopHeader() {
@@ -46,7 +50,9 @@ export function DesktopHeader() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   const seg = pathname.split("/")[1] || "dashboard";
-  const crumb = CRUMBS[seg] ?? { title: seg.charAt(0).toUpperCase() + seg.slice(1) };
+  const crumb = CRUMBS[seg];
+  const crumbTitle = crumb ? t(crumb.titleKey) : seg.charAt(0).toUpperCase() + seg.slice(1);
+  const crumbParent = crumb?.parentKey ? t(crumb.parentKey) : null;
 
   const alertCount = activeLine ? exceptions(data, activeLine.id).length : 0;
 
@@ -97,15 +103,15 @@ export function DesktopHeader() {
       <div className="min-w-0">
         <div className="flex items-center gap-1.5 text-[11px] text-[color:var(--text-faint)] leading-none">
           <span>{activeLine?.name ?? "VasoolX"}</span>
-          {crumb.parent && (
+          {crumbParent && (
             <>
               <ChevronRight size={11} />
-              <span>{crumb.parent}</span>
+              <span>{crumbParent}</span>
             </>
           )}
         </div>
         <h1 className="text-[16px] font-bold text-[color:var(--text)] leading-tight truncate mt-0.5">
-          {crumb.title}
+          {crumbTitle}
         </h1>
       </div>
 
@@ -116,7 +122,7 @@ export function DesktopHeader() {
           ref={searchRef}
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search customers, loans, receipts, agents, transactions…"
+          placeholder={t("sb.searchPlaceholder")}
           className="field-erp w-full h-9 pl-9 pr-16 text-[13px]"
         />
         <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-0.5 px-1.5 h-5 rounded-md border border-[color:var(--line-strong)] bg-[color:var(--panel-3)] text-[10px] font-semibold text-[color:var(--text-faint)]">
@@ -130,7 +136,7 @@ export function DesktopHeader() {
           href="/dashboard"
           className="relative w-9 h-9 grid place-items-center rounded-lg text-[color:var(--text-soft)] hover:bg-[color:var(--brand)]/10 hover:text-[color:var(--brand)] transition"
           aria-label="Notifications"
-          title={`${alertCount} alerts`}
+          title={t("sb.alerts", { n: alertCount })}
         >
           <Bell size={18} />
           {alertCount > 0 && (
@@ -141,8 +147,8 @@ export function DesktopHeader() {
         </Link>
         <button
           className="w-9 h-9 grid place-items-center rounded-lg text-[color:var(--text-soft)] hover:bg-[color:var(--brand)]/10 hover:text-[color:var(--brand)] transition"
-          aria-label="Help"
-          title="Help & documentation"
+          aria-label={t("sb.help")}
+          title={t("sb.help")}
         >
           <HelpCircle size={18} />
         </button>
@@ -173,7 +179,7 @@ export function DesktopHeader() {
               {data.profile.name || "User"}
             </div>
             <div className="text-[10px] text-[color:var(--text-faint)] flex items-center gap-0.5">
-              <ShieldCheck size={9} className="text-[color:var(--ok)]" /> Administrator
+              <ShieldCheck size={9} className="text-[color:var(--ok)]" /> {t("sb.administrator")}
             </div>
           </div>
           <ChevronDown size={14} className="text-[color:var(--text-faint)] hidden lg:block" />

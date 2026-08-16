@@ -69,138 +69,138 @@ import { Wordmark, LogoMark } from "@/components/ui/Logo";
 import { Sheet } from "@/components/ui/Sheet";
 import { cx } from "@/components/ui/primitives";
 
-type NavItem = { label: string; href: string; Icon: LucideIcon; badgeKey?: "overdue" | "pending" };
-type NavSection = { key: string; title?: string; Icon: LucideIcon; items: NavItem[]; more?: boolean };
+type NavItem = { labelKey: string; href: string; Icon: LucideIcon; badgeKey?: "overdue" | "pending" };
+type NavSection = { key: string; titleKey?: string; Icon: LucideIcon; items: NavItem[]; more?: boolean };
 
 const SECTIONS: NavSection[] = [
   {
     key: "home",
     Icon: LayoutDashboard,
-    items: [{ label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard }],
+    items: [{ labelKey: "sb.dashboard", href: "/dashboard", Icon: LayoutDashboard }],
   },
   {
     key: "customers",
-    title: "Customers",
+    titleKey: "sb.customers",
     Icon: Users,
     items: [
-      { label: "Customer Directory", href: "/customers", Icon: Contact },
-      { label: "Customer Groups", href: "/customers?group=all", Icon: UsersRound },
-      { label: "Customer Documents", href: "/customers?tab=documents", Icon: FileText },
-      { label: "Customer History", href: "/customers?tab=history", Icon: History },
+      { labelKey: "sb.customerDirectory", href: "/customers", Icon: Contact },
+      { labelKey: "sb.customerGroups", href: "/customers?group=all", Icon: UsersRound },
+      { labelKey: "sb.customerDocuments", href: "/customers?tab=documents", Icon: FileText },
+      { labelKey: "sb.customerHistory", href: "/customers?tab=history", Icon: History },
     ],
   },
   {
     key: "collections",
-    title: "Collections",
+    titleKey: "sb.collections",
     Icon: HandCoins,
     items: [
-      { label: "Collection Dashboard", href: "/collect", Icon: Gauge },
-      { label: "Collect Now", href: "/collect?mode=instant", Icon: HandCoins },
-      { label: "Bulk Collection", href: "/collect?mode=bulk", Icon: Layers },
-      { label: "Pending Collections", href: "/collect?filter=pending", Icon: Clock },
-      { label: "Collection Schedule", href: "/collect?tab=schedule", Icon: CalendarDays },
-      { label: "Collection Verification", href: "/collect?tab=verify", Icon: BadgeCheck },
+      { labelKey: "sb.collectionDashboard", href: "/collect", Icon: Gauge },
+      { labelKey: "sb.collectNow", href: "/collect?mode=instant", Icon: HandCoins },
+      { labelKey: "sb.bulkCollection", href: "/collect?mode=bulk", Icon: Layers },
+      { labelKey: "sb.pendingCollections", href: "/collect?filter=pending", Icon: Clock },
+      { labelKey: "sb.collectionSchedule", href: "/collect?tab=schedule", Icon: CalendarDays },
+      { labelKey: "sb.collectionVerification", href: "/collect?tab=verify", Icon: BadgeCheck },
     ],
   },
   {
     key: "receivables",
-    title: "Receivables",
+    titleKey: "sb.receivables",
     Icon: Wallet,
     items: [
-      { label: "Outstanding", href: "/receivables", Icon: Wallet },
-      { label: "Due Today", href: "/receivables?view=due", Icon: CalendarClock },
-      { label: "Overdue", href: "/receivables?view=overdue", Icon: AlertTriangle, badgeKey: "overdue" },
-      { label: "Aging Analysis", href: "/receivables?view=aging", Icon: PieChart },
-      { label: "Recovery Tracking", href: "/receivables?view=recovery", Icon: Undo2 },
+      { labelKey: "sb.outstanding", href: "/receivables", Icon: Wallet },
+      { labelKey: "sb.dueToday", href: "/receivables?view=due", Icon: CalendarClock },
+      { labelKey: "sb.overdue", href: "/receivables?view=overdue", Icon: AlertTriangle, badgeKey: "overdue" },
+      { labelKey: "sb.agingAnalysis", href: "/receivables?view=aging", Icon: PieChart },
+      { labelKey: "sb.recoveryTracking", href: "/receivables?view=recovery", Icon: Undo2 },
     ],
   },
   {
     key: "loans",
-    title: "Loans / Accounts",
+    titleKey: "sb.loans",
     Icon: Landmark,
     items: [
-      { label: "Active Loans", href: "/loans", Icon: Landmark },
-      { label: "Installments", href: "/loans?view=installments", Icon: ListChecks },
-      { label: "Payment Schedule", href: "/loans?view=schedule", Icon: CalendarRange },
-      { label: "Loan Register", href: "/loans?view=register", Icon: BookOpen },
+      { labelKey: "sb.activeLoans", href: "/loans", Icon: Landmark },
+      { labelKey: "sb.installments", href: "/loans?view=installments", Icon: ListChecks },
+      { labelKey: "sb.paymentSchedule", href: "/loans?view=schedule", Icon: CalendarRange },
+      { labelKey: "sb.loanRegister", href: "/loans?view=register", Icon: BookOpen },
     ],
   },
   {
     key: "field",
-    title: "Field Operations",
+    titleKey: "sb.field",
     Icon: Route,
     items: [
-      { label: "Collection Routes", href: "/field", Icon: Route },
-      { label: "Field Agents", href: "/field?view=agents", Icon: Users },
-      { label: "Daily Assignments", href: "/field?view=assignments", Icon: ClipboardList },
-      { label: "Location Tracking", href: "/field?view=tracking", Icon: MapPin },
-      { label: "Visit History", href: "/field?view=visits", Icon: History },
+      { labelKey: "sb.collectionRoutes", href: "/field", Icon: Route },
+      { labelKey: "sb.fieldAgents", href: "/field?view=agents", Icon: Users },
+      { labelKey: "sb.dailyAssignments", href: "/field?view=assignments", Icon: ClipboardList },
+      { labelKey: "sb.locationTracking", href: "/field?view=tracking", Icon: MapPin },
+      { labelKey: "sb.visitHistory", href: "/field?view=visits", Icon: History },
     ],
   },
   {
     key: "finance",
-    title: "Finance",
+    titleKey: "sb.finance",
     Icon: Coins,
     more: true,
     items: [
-      { label: "Receipts", href: "/finance?tab=receipts", Icon: Receipt },
-      { label: "Expenses", href: "/finance?tab=expenses", Icon: TrendingDown },
-      { label: "Cash Management", href: "/finance?tab=cash", Icon: Banknote },
-      { label: "Reconciliation", href: "/finance?tab=recon", Icon: Scale },
-      { label: "Ledger", href: "/reports/ledger", Icon: BookOpen },
+      { labelKey: "sb.receipts", href: "/finance?tab=receipts", Icon: Receipt },
+      { labelKey: "sb.expenses", href: "/finance?tab=expenses", Icon: TrendingDown },
+      { labelKey: "sb.cashManagement", href: "/finance?tab=cash", Icon: Banknote },
+      { labelKey: "sb.reconciliation", href: "/finance?tab=recon", Icon: Scale },
+      { labelKey: "sb.ledger", href: "/reports/ledger", Icon: BookOpen },
     ],
   },
   {
     key: "reports",
-    title: "Reports",
+    titleKey: "sb.reports",
     Icon: BarChart3,
     more: true,
     items: [
-      { label: "Collection Reports", href: "/reports/loan-summary", Icon: BarChart3 },
-      { label: "Agent Performance", href: "/field?view=agents", Icon: Trophy },
-      { label: "Customer Reports", href: "/reports/customer", Icon: UsersRound },
-      { label: "Financial Reports", href: "/reports/investment", Icon: LineChart },
-      { label: "Export Center", href: "/reports?tab=export", Icon: Download },
+      { labelKey: "sb.collectionReports", href: "/reports/loan-summary", Icon: BarChart3 },
+      { labelKey: "sb.agentPerformance", href: "/field?view=agents", Icon: Trophy },
+      { labelKey: "sb.customerReports", href: "/reports/customer", Icon: UsersRound },
+      { labelKey: "sb.financialReports", href: "/reports/investment", Icon: LineChart },
+      { labelKey: "sb.exportCenter", href: "/reports?tab=export", Icon: Download },
     ],
   },
   {
     key: "master",
-    title: "Master Data",
+    titleKey: "sb.master",
     Icon: Database,
     more: true,
     items: [
-      { label: "Areas", href: "/areas", Icon: MapPin },
-      { label: "Lines", href: "/lines", Icon: Layers },
-      { label: "Products", href: "/master", Icon: Package },
-      { label: "Schemes", href: "/master?view=schemes", Icon: Boxes },
-      { label: "Payment Methods", href: "/master?view=methods", Icon: CreditCard },
-      { label: "Categories", href: "/master?view=categories", Icon: Tags },
+      { labelKey: "sb.areas", href: "/areas", Icon: MapPin },
+      { labelKey: "sb.lines", href: "/lines", Icon: Layers },
+      { labelKey: "sb.products", href: "/master", Icon: Package },
+      { labelKey: "sb.schemes", href: "/master?view=schemes", Icon: Boxes },
+      { labelKey: "sb.paymentMethods", href: "/master?view=methods", Icon: CreditCard },
+      { labelKey: "sb.categories", href: "/master?view=categories", Icon: Tags },
     ],
   },
   {
     key: "access",
-    title: "Users & Access",
+    titleKey: "sb.access",
     Icon: ShieldCheck,
     more: true,
     items: [
-      { label: "Users", href: "/users", Icon: Users },
-      { label: "Roles", href: "/users?tab=roles", Icon: UserCog },
-      { label: "Permissions", href: "/users?tab=permissions", Icon: KeyRound },
-      { label: "Activity Logs", href: "/users?tab=activity", Icon: Activity },
-      { label: "Login History", href: "/users?tab=logins", Icon: LogIn },
+      { labelKey: "sb.users", href: "/users", Icon: Users },
+      { labelKey: "sb.roles", href: "/users?tab=roles", Icon: UserCog },
+      { labelKey: "sb.permissions", href: "/users?tab=permissions", Icon: KeyRound },
+      { labelKey: "sb.activityLogs", href: "/users?tab=activity", Icon: Activity },
+      { labelKey: "sb.loginHistory", href: "/users?tab=logins", Icon: LogIn },
     ],
   },
   {
     key: "admin",
-    title: "Administration",
+    titleKey: "sb.admin",
     Icon: Settings,
     more: true,
     items: [
-      { label: "Subscription", href: "/subscription", Icon: Crown },
-      { label: "Integrations", href: "/settings?tab=integrations", Icon: Blocks },
-      { label: "Notifications", href: "/settings?tab=notifications", Icon: Bell },
-      { label: "Settings", href: "/settings", Icon: Settings },
-      { label: "Security", href: "/settings?tab=security", Icon: ShieldCheck },
+      { labelKey: "sb.subscription", href: "/subscription", Icon: Crown },
+      { labelKey: "sb.integrations", href: "/settings?tab=integrations", Icon: Blocks },
+      { labelKey: "sb.notifications", href: "/settings?tab=notifications", Icon: Bell },
+      { labelKey: "sb.settings", href: "/settings", Icon: Settings },
+      { labelKey: "sb.security", href: "/settings?tab=security", Icon: ShieldCheck },
     ],
   },
 ];
@@ -352,7 +352,7 @@ function SidebarInner() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase tracking-wide text-[color:var(--text-faint)] flex items-center gap-1">
-                <Building2 size={10} /> {activeLine?.id === ALL_LINES ? "Consolidated" : activeLine ? t(`line.${activeLine.loanType}`) : "Workspace"}
+                <Building2 size={10} /> {activeLine?.id === ALL_LINES ? t("sb.consolidated") : activeLine ? t(`line.${activeLine.loanType}`) : t("sb.workspace")}
               </div>
               <div className="font-bold text-[color:var(--text)] truncate text-[14px] leading-tight">
                 {activeLine?.name ?? "VasoolX"}
@@ -373,7 +373,7 @@ function SidebarInner() {
                 <Link
                   key={s.key}
                   href={s.items[0].href}
-                  title={s.title ?? "Dashboard"}
+                  title={s.titleKey ? t(s.titleKey) : t("sb.dashboard")}
                   className={cx(
                     "relative w-10 h-10 grid place-items-center rounded-lg transition",
                     active
@@ -390,7 +390,7 @@ function SidebarInner() {
             })
           : visibleSections.map((s) => (
               <div key={s.key}>
-                {s.title && <div className="nav-section mb-1">{s.title}</div>}
+                {s.titleKey && <div className="nav-section mb-1">{t(s.titleKey)}</div>}
                 <div className="flex flex-col gap-0.5">
                   {s.items.map((it) => {
                     const active = isActive(it.href);
@@ -402,7 +402,7 @@ function SidebarInner() {
                         className={cx("nav-item", active && "nav-item-active")}
                       >
                         <it.Icon size={17} strokeWidth={active ? 2.4 : 2} className="shrink-0" />
-                        <span className="truncate flex-1">{it.label}</span>
+                        <span className="truncate flex-1">{t(it.labelKey)}</span>
                         {badge > 0 && (
                           <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[color:var(--crit-bg)] text-[color:var(--crit)] text-[10px] font-bold grid place-items-center border border-[color:var(--crit-line)]">
                             {badge}
@@ -423,7 +423,7 @@ function SidebarInner() {
           >
             <Boxes size={17} className="shrink-0" />
             <span className="truncate flex-1 text-left font-semibold">
-              {showMore ? "Fewer Modules" : "More Modules"}
+              {showMore ? t("sb.fewerModules") : t("sb.moreModules")}
             </span>
             <ChevronRight size={15} className={cx("transition-transform", showMore && "rotate-90")} />
           </button>
@@ -461,7 +461,7 @@ function SidebarInner() {
                 {data.profile.name || "User"}
               </div>
               <div className="text-[11px] text-[color:var(--text-faint)] truncate flex items-center gap-1">
-                <ShieldCheck size={10} className="text-[color:var(--ok)]" /> Administrator
+                <ShieldCheck size={10} className="text-[color:var(--ok)]" /> {t("sb.administrator")}
               </div>
             </div>
             <button
@@ -492,8 +492,8 @@ function SidebarInner() {
                   <Layers size={20} />
                 </span>
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand)]">Consolidated</div>
-                  <div className="text-lg font-bold text-[color:var(--text)]">All Lines</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand)]">{t("sb.consolidated")}</div>
+                  <div className="text-lg font-bold text-[color:var(--text)]">{t("sb.allLines")}</div>
                 </div>
               </div>
               {activeLine?.id === ALL_LINES && <Check className="text-[color:var(--brand)]" />}

@@ -29,11 +29,11 @@ import {
 import { inr, inrCompact, fmtDate } from "@/lib/format";
 
 const VIEWS = [
-  { key: "routes", label: "Collection Routes", Icon: Route },
-  { key: "agents", label: "Field Agents", Icon: Users },
-  { key: "assignments", label: "Daily Assignments", Icon: ClipboardList },
-  { key: "tracking", label: "Location Tracking", Icon: MapPin },
-  { key: "visits", label: "Visit History", Icon: History },
+  { key: "routes", labelKey: "sb.collectionRoutes", Icon: Route },
+  { key: "agents", labelKey: "sb.fieldAgents", Icon: Users },
+  { key: "assignments", labelKey: "sb.dailyAssignments", Icon: ClipboardList },
+  { key: "tracking", labelKey: "sb.locationTracking", Icon: MapPin },
+  { key: "visits", labelKey: "sb.visitHistory", Icon: History },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
 
@@ -49,7 +49,7 @@ function Inner() {
   const params = useSearchParams();
   const router = useRouter();
   const { data, activeLine } = useStore();
-  useI18n();
+  const { t } = useI18n();
 
   const view = (VIEWS.find((v) => v.key === params.get("view"))?.key ?? "routes") as View;
   const lineId = activeLine?.id ?? "";
@@ -93,31 +93,31 @@ function Inner() {
     <>
       <TopBar />
       <PageHead
-        title="Field Operations"
-        subtitle={`${activeLine?.name ?? ""} · ${members.length} agents · ${areas.length} routes`}
-        actions={<button className="chip"><Download size={15} /> Export</button>}
+        title={t("sb.field")}
+        subtitle={`${activeLine?.name ?? ""} · ${t("fld.subtitle", { agents: members.length, routes: areas.length })}`}
+        actions={<button className="chip"><Download size={15} /> {t("common.export")}</button>}
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4">
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-          <StatTile label="Active Agents" value={String(members.length)} icon={<Users size={16} />} color="var(--brand)" />
-          <StatTile label="Collection Routes" value={String(areas.length)} icon={<Route size={16} />} color="#7c6bf0" />
-          <StatTile label="Expected Today" value={inrCompact(totalExpected)} icon={<ClipboardList size={16} />} color="var(--warn)" />
-          <StatTile label="Collected Today" value={inrCompact(collectedToday)} icon={<CheckCircle2 size={16} />} color="var(--ok)" />
+          <StatTile label={t("fld.activeAgents")} value={String(members.length)} icon={<Users size={16} />} color="var(--brand)" />
+          <StatTile label={t("sb.collectionRoutes")} value={String(areas.length)} icon={<Route size={16} />} color="#7c6bf0" />
+          <StatTile label={t("fld.expectedToday")} value={inrCompact(totalExpected)} icon={<ClipboardList size={16} />} color="var(--warn)" />
+          <StatTile label={t("col.collectedToday")} value={inrCompact(collectedToday)} icon={<CheckCircle2 size={16} />} color="var(--ok)" />
         </div>
 
         <div className="segtab w-fit flex-wrap">
           {VIEWS.map((v) => (
-            <button key={v.key} data-active={view === v.key} onClick={() => router.replace(`/field?view=${v.key}`)}>{v.label}</button>
+            <button key={v.key} data-active={view === v.key} onClick={() => router.replace(`/field?view=${v.key}`)}>{t(v.labelKey)}</button>
           ))}
         </div>
 
         {view === "routes" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Collection Routes" desc={`${areas.length} active routes`} />
+            <PanelHead title={t("sb.collectionRoutes")} desc={t("fld.activeRoutes", { n: areas.length })} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>Route / Area</th><th className="text-right">Customers</th><th className="text-right">Expected</th><th className="text-right">Collected</th><th>Progress</th></tr></thead>
+                <thead><tr><th>{t("fld.thRouteArea")}</th><th className="text-right">{t("fld.thCustomers")}</th><th className="text-right">{t("col.expected")}</th><th className="text-right">{t("col.collected")}</th><th>{t("rec.thProgress")}</th></tr></thead>
                 <tbody>
                   {areas.map((a) => {
                     const cust = custByArea(a.id).length;
@@ -142,10 +142,10 @@ function Inner() {
 
         {view === "agents" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Field Agents Performance" desc={`${agents.length} agents`} />
+            <PanelHead title={t("fld.agentsPerf")} desc={t("fld.agentsCount", { n: agents.length })} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>Agent</th><th>Role</th><th className="text-right">Target</th><th className="text-right">Collected</th><th>Achievement</th><th className="text-right">Visits</th></tr></thead>
+                <thead><tr><th>{t("dash.agent")}</th><th>{t("fld.thRole")}</th><th className="text-right">{t("dash.thTarget")}</th><th className="text-right">{t("col.collected")}</th><th>{t("dash.thAchievement")}</th><th className="text-right">{t("fld.thVisits")}</th></tr></thead>
                 <tbody>
                   {agents.map((a) => (
                     <tr key={a.id}>
@@ -171,18 +171,18 @@ function Inner() {
               const exp = area ? expectedForArea(area.id) : 0;
               return (
                 <Panel key={m.id}>
-                  <PanelHead title={m.name} desc={area ? `Route: ${area.name}` : "Unassigned"} icon={<Users size={15} />} />
+                  <PanelHead title={m.name} desc={area ? t("fld.route", { name: area.name }) : t("cust.unassigned")} icon={<Users size={15} />} />
                   <div className="p-4 space-y-3">
                     <div className="flex items-center justify-between text-[13px]">
-                      <span className="text-[color:var(--text-soft)]">Customers to visit</span>
+                      <span className="text-[color:var(--text-soft)]">{t("fld.customersToVisit")}</span>
                       <span className="font-bold tabular">{cust.length}</span>
                     </div>
                     <div className="flex items-center justify-between text-[13px]">
-                      <span className="text-[color:var(--text-soft)]">Expected collection</span>
+                      <span className="text-[color:var(--text-soft)]">{t("col.expectedCollection")}</span>
                       <span className="font-bold tabular">{inr(exp)}</span>
                     </div>
                     <div className="flex items-center gap-2 pt-1">
-                      <StatusBadge tone="ok">Assigned</StatusBadge>
+                      <StatusBadge tone="ok">{t("fld.assigned")}</StatusBadge>
                       <StatusBadge tone="neutral" dot={false}>{fmtDate(new Date().toISOString())}</StatusBadge>
                     </div>
                   </div>
@@ -195,7 +195,7 @@ function Inner() {
         {view === "tracking" && (
           <div className="grid gap-4 xl:grid-cols-[1fr_280px] items-start">
             <Panel className="overflow-hidden">
-              <PanelHead title="Live Location Tracking" desc="Real-time agent positions across routes" icon={<Navigation size={15} />} />
+              <PanelHead title={t("fld.liveTracking")} desc={t("fld.liveTrackingDesc")} icon={<Navigation size={15} />} />
               <div className="relative m-4 rounded-xl overflow-hidden border border-[color:var(--line)]" style={{ height: 360, background: "linear-gradient(135deg, color-mix(in srgb, var(--brand) 8%, var(--panel-2)), var(--panel-2))" }}>
                 {/* grid streets */}
                 <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.5 }}>
@@ -217,13 +217,13 @@ function Inner() {
               </div>
             </Panel>
             <Panel>
-              <PanelHead title="Agents Online" />
+              <PanelHead title={t("fld.agentsOnline")} />
               <div className="divide-y divide-[color:var(--line)]">
                 {markers.map((mk) => (
                   <div key={mk.id} className="flex items-center gap-2.5 px-4 py-2.5">
                     <span className="w-8 h-8 rounded-full grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)] font-bold text-[11px]">{mk.name.charAt(0).toUpperCase()}</span>
                     <span className="flex-1 text-[13px] font-medium">{mk.name}</span>
-                    <StatusBadge tone={mk.active ? "ok" : "neutral"}>{mk.active ? "On Route" : "Idle"}</StatusBadge>
+                    <StatusBadge tone={mk.active ? "ok" : "neutral"}>{mk.active ? t("fld.onRoute") : t("fld.idle")}</StatusBadge>
                   </div>
                 ))}
               </div>
@@ -233,10 +233,10 @@ function Inner() {
 
         {view === "visits" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Visit History" desc={`${recentVisits.length} recent field visits`} />
+            <PanelHead title={t("sb.visitHistory")} desc={t("fld.visitHistoryDesc", { n: recentVisits.length })} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>Date</th><th>Customer</th><th>Area</th><th>Outcome</th><th className="text-right">Collected</th></tr></thead>
+                <thead><tr><th>{t("dash.date")}</th><th>{t("dash.customer")}</th><th>{t("dash.area")}</th><th>{t("fld.thOutcome")}</th><th className="text-right">{t("col.collected")}</th></tr></thead>
                 <tbody>
                   {recentVisits.map((p) => {
                     const c = data.customers.find((x) => x.id === p.customerId);
@@ -245,12 +245,12 @@ function Inner() {
                         <td className="tabular text-[color:var(--text-soft)]">{fmtDate(p.date)}</td>
                         <td className="font-semibold">{c?.name ?? "—"}</td>
                         <td className="text-[color:var(--text-soft)]">{areaName(data, c?.areaId ?? null) ?? "—"}</td>
-                        <td><StatusBadge tone="ok">Collected</StatusBadge></td>
+                        <td><StatusBadge tone="ok">{t("col.collected")}</StatusBadge></td>
                         <td className="text-right tabular font-bold text-[color:var(--ok)]">{inr(p.amount)}</td>
                       </tr>
                     );
                   })}
-                  {recentVisits.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-[color:var(--text-faint)]"><Clock size={20} className="inline mr-1" /> No visits recorded yet</td></tr>}
+                  {recentVisits.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-[color:var(--text-faint)]"><Clock size={20} className="inline mr-1" /> {t("fld.noVisits")}</td></tr>}
                 </tbody>
               </table>
             </div>

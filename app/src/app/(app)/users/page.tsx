@@ -28,11 +28,11 @@ import { fmtDate } from "@/lib/format";
 import { inr } from "@/lib/format";
 
 const TABS = [
-  { key: "users", label: "Users", Icon: UsersRound },
-  { key: "roles", label: "Roles", Icon: UserCog },
-  { key: "permissions", label: "Permissions", Icon: KeyRound },
-  { key: "activity", label: "Activity Logs", Icon: Activity },
-  { key: "logins", label: "Login History", Icon: LogIn },
+  { key: "users", labelKey: "sb.users", Icon: UsersRound },
+  { key: "roles", labelKey: "sb.roles", Icon: UserCog },
+  { key: "permissions", labelKey: "sb.permissions", Icon: KeyRound },
+  { key: "activity", labelKey: "sb.activityLogs", Icon: Activity },
+  { key: "logins", labelKey: "sb.loginHistory", Icon: LogIn },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -55,20 +55,20 @@ function Inner() {
   const pending = data.members.filter((m) => m.status === "pending").length;
 
   const roles = [
-    { name: "Administrator", tone: "info" as const, desc: "Full access to all modules, finance & settings", count: 1, perms: ["All modules", "Finance & reports", "User management", "Settings"] },
-    { name: "Partner", tone: "ok" as const, desc: "Operations, collections and financial reports", count: data.members.filter((m) => m.accessType === "partner").length, perms: ["Collections", "Customers", "Financial reports", "Investments"] },
-    { name: "Agent", tone: "neutral" as const, desc: "Field collection and customer management", count: data.members.filter((m) => m.accessType === "agent").length, perms: ["Collections", "Customers", "Field operations"] },
+    { key: "admin", name: t("sb.administrator"), tone: "info" as const, desc: t("usr.roleAdminDesc"), count: 1, perms: [t("usr.permAllModules"), t("usr.permFinanceReports"), t("usr.permUserMgmt"), t("usr.permSettings")] },
+    { key: "partner", name: t("user.partner"), tone: "ok" as const, desc: t("usr.rolePartnerDesc"), count: data.members.filter((m) => m.accessType === "partner").length, perms: [t("usr.permCollections"), t("usr.permCustomers"), t("usr.permFinancialReports"), t("usr.permInvestments")] },
+    { key: "agent", name: t("user.agent"), tone: "neutral" as const, desc: t("usr.roleAgentDesc"), count: data.members.filter((m) => m.accessType === "agent").length, perms: [t("usr.permCollections"), t("usr.permCustomers"), t("usr.permFieldOps")] },
   ];
 
   const matrix = [
-    { module: "Dashboard", admin: 2, partner: 2, agent: 2 },
-    { module: "Customers", admin: 2, partner: 2, agent: 2 },
-    { module: "Collections", admin: 2, partner: 2, agent: 2 },
-    { module: "Receivables", admin: 2, partner: 2, agent: 1 },
-    { module: "Finance", admin: 2, partner: 1, agent: 0 },
-    { module: "Reports", admin: 2, partner: 2, agent: 1 },
-    { module: "Users & Access", admin: 2, partner: 0, agent: 0 },
-    { module: "Administration", admin: 2, partner: 0, agent: 0 },
+    { module: t("sb.dashboard"), admin: 2, partner: 2, agent: 2 },
+    { module: t("sb.customers"), admin: 2, partner: 2, agent: 2 },
+    { module: t("sb.collections"), admin: 2, partner: 2, agent: 2 },
+    { module: t("sb.receivables"), admin: 2, partner: 2, agent: 1 },
+    { module: t("sb.finance"), admin: 2, partner: 1, agent: 0 },
+    { module: t("sb.reports"), admin: 2, partner: 2, agent: 1 },
+    { module: t("sb.access"), admin: 2, partner: 0, agent: 0 },
+    { module: t("sb.admin"), admin: 2, partner: 0, agent: 0 },
   ];
 
   const activity = useMemo(() => {
@@ -77,7 +77,7 @@ function Inner() {
       .slice()
       .sort((a, b) => +new Date(b.date) - +new Date(a.date))
       .slice(0, 15)
-      .map((p) => ({ id: p.id, actor: data.profile.name || "Administrator", action: `Collected ${inr(p.amount)} from ${custName.get(p.customerId) ?? "customer"}`, date: p.date }));
+      .map((p) => ({ id: p.id, actor: data.profile.name || t("sb.administrator"), action: t("usr.collectedAction", { amount: inr(p.amount), name: custName.get(p.customerId) ?? t("dash.customer") }), date: p.date }));
   }, [data]);
 
   const logins = useMemo(() => {
@@ -95,13 +95,13 @@ function Inner() {
     <>
       <TopBar />
       <PageHead
-        title="Users & Access"
-        subtitle={`${data.members.length} team members · role-based access control`}
+        title={t("sb.access")}
+        subtitle={t("usr.subtitle", { n: data.members.length })}
         actions={
           <>
-            <Link href="/settings" className="chip"><ChevronLeft size={15} /> Settings</Link>
+            <Link href="/settings" className="chip"><ChevronLeft size={15} /> {t("sb.settings")}</Link>
             <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={() => router.push("/users/add")}>
-              <Plus size={15} /> Add User
+              <Plus size={15} /> {t("usr.addUser")}
             </button>
           </>
         }
@@ -109,14 +109,14 @@ function Inner() {
 
       <main className="px-4 md:px-6 py-4 space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          <StatTile label="Total Users" value={String(data.members.length)} icon={<UsersRound size={16} />} color="var(--brand)" />
-          <StatTile label="Active" value={String(active + 1)} icon={<ShieldCheck size={16} />} color="var(--ok)" />
-          <StatTile label="Pending" value={String(pending)} icon={<ShieldCheck size={16} />} color="var(--warn)" />
+          <StatTile label={t("usr.totalUsers")} value={String(data.members.length)} icon={<UsersRound size={16} />} color="var(--brand)" />
+          <StatTile label={t("common.active")} value={String(active + 1)} icon={<ShieldCheck size={16} />} color="var(--ok)" />
+          <StatTile label={t("cust.pending")} value={String(pending)} icon={<ShieldCheck size={16} />} color="var(--warn)" />
         </div>
 
         <div className="segtab w-fit flex-wrap">
           {TABS.map((x) => (
-            <button key={x.key} data-active={tab === x.key} onClick={() => router.replace(`/users?tab=${x.key}`)}>{x.label}</button>
+            <button key={x.key} data-active={tab === x.key} onClick={() => router.replace(`/users?tab=${x.key}`)}>{t(x.labelKey)}</button>
           ))}
         </div>
 
@@ -128,10 +128,10 @@ function Inner() {
             </Panel>
           ) : (
             <Panel className="overflow-hidden">
-              <PanelHead title="Access Directory" desc={`${data.members.length} members`} />
+              <PanelHead title={t("usr.accessDirectory")} desc={t("usr.membersCount", { n: data.members.length })} />
               <div className="overflow-x-auto">
                 <table className="dt">
-                  <thead><tr><th>User</th><th>Role</th><th>Line</th><th>Status</th><th></th></tr></thead>
+                  <thead><tr><th>{t("usr.thUser")}</th><th>{t("fld.thRole")}</th><th>{t("rep.line")}</th><th>{t("dash.thStatus")}</th><th></th></tr></thead>
                   <tbody>
                     {data.members.map((m) => {
                       const line = data.lines.find((l) => l.id === m.lineId);
@@ -145,7 +145,7 @@ function Inner() {
                           </td>
                           <td><StatusBadge tone={m.accessType === "partner" ? "info" : "neutral"} dot={false}>{t(`user.${m.accessType}`)}</StatusBadge></td>
                           <td className="text-[color:var(--text-soft)]">{line?.name ?? "—"}</td>
-                          <td><StatusBadge tone={m.status === "active" ? "ok" : "warn"}>{m.status === "active" ? "Active" : "Pending"}</StatusBadge></td>
+                          <td><StatusBadge tone={m.status === "active" ? "ok" : "warn"}>{m.status === "active" ? t("common.active") : t("cust.pending")}</StatusBadge></td>
                           <td><button onClick={() => deleteMember(m.id)} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)] ml-auto" aria-label="Remove"><Trash2 size={14} /></button></td>
                         </tr>
                       );
@@ -160,10 +160,10 @@ function Inner() {
         {tab === "roles" && (
           <div className="grid gap-3 md:grid-cols-3">
             {roles.map((r) => (
-              <Panel key={r.name} className="p-4">
+              <Panel key={r.key} className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="w-10 h-10 rounded-xl grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)]"><ShieldCheck size={20} /></span>
-                  <StatusBadge tone={r.tone} dot={false}>{r.count} {r.count === 1 ? "user" : "users"}</StatusBadge>
+                  <StatusBadge tone={r.tone} dot={false}>{r.count === 1 ? t("usr.userCount", { n: r.count }) : t("usr.usersCount", { n: r.count })}</StatusBadge>
                 </div>
                 <div className="font-bold text-[color:var(--text)]">{r.name}</div>
                 <div className="text-[12px] text-[color:var(--text-soft)] mt-0.5 mb-3">{r.desc}</div>
@@ -179,10 +179,10 @@ function Inner() {
 
         {tab === "permissions" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Permission Matrix" desc="Module access by role" />
+            <PanelHead title={t("usr.permMatrix")} desc={t("usr.permMatrixDesc")} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>Module</th><th className="text-center">Administrator</th><th className="text-center">Partner</th><th className="text-center">Agent</th></tr></thead>
+                <thead><tr><th>{t("usr.thModule")}</th><th className="text-center">{t("sb.administrator")}</th><th className="text-center">{t("user.partner")}</th><th className="text-center">{t("user.agent")}</th></tr></thead>
                 <tbody>
                   {matrix.map((row) => (
                     <tr key={row.module}>
@@ -196,16 +196,16 @@ function Inner() {
               </table>
             </div>
             <div className="px-4 py-2.5 border-t border-[color:var(--line)] flex gap-4 text-[11px] text-[color:var(--text-faint)]">
-              <span className="inline-flex items-center gap-1"><Check size={12} className="text-[color:var(--ok)]" /> Full</span>
-              <span className="inline-flex items-center gap-1"><Minus size={12} className="text-[color:var(--warn)]" /> Read-only</span>
-              <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[color:var(--text-faint)]/40" /> No access</span>
+              <span className="inline-flex items-center gap-1"><Check size={12} className="text-[color:var(--ok)]" /> {t("usr.full")}</span>
+              <span className="inline-flex items-center gap-1"><Minus size={12} className="text-[color:var(--warn)]" /> {t("usr.readOnly")}</span>
+              <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[color:var(--text-faint)]/40" /> {t("usr.noAccess")}</span>
             </div>
           </Panel>
         )}
 
         {tab === "activity" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Activity Logs" desc="Audit trail of user actions" />
+            <PanelHead title={t("sb.activityLogs")} desc={t("usr.activityLogsDesc")} />
             <div className="divide-y divide-[color:var(--line)]">
               {activity.map((a) => (
                 <div key={a.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -216,25 +216,25 @@ function Inner() {
                   <span className="text-[11px] text-[color:var(--text-faint)] tabular shrink-0">{fmtDate(a.date)}</span>
                 </div>
               ))}
-              {activity.length === 0 && <div className="px-4 py-8 text-center text-[color:var(--text-faint)] text-[13px]">No activity recorded yet</div>}
+              {activity.length === 0 && <div className="px-4 py-8 text-center text-[color:var(--text-faint)] text-[13px]">{t("usr.noActivity")}</div>}
             </div>
           </Panel>
         )}
 
         {tab === "logins" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Login History" desc="Recent sign-in sessions" />
+            <PanelHead title={t("sb.loginHistory")} desc={t("usr.loginHistoryDesc")} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>User</th><th>Device</th><th>IP Address</th><th>When</th><th>Status</th></tr></thead>
+                <thead><tr><th>{t("usr.thUser")}</th><th>{t("usr.thDevice")}</th><th>{t("usr.thIp")}</th><th>{t("usr.thWhen")}</th><th>{t("dash.thStatus")}</th></tr></thead>
                 <tbody>
                   {logins.map((l) => (
                     <tr key={l.id}>
                       <td className="font-semibold">{l.name}</td>
-                      <td><span className="inline-flex items-center gap-1.5 text-[color:var(--text-soft)]">{l.device === "Desktop" ? <Monitor size={14} /> : <Smartphone size={14} />} {l.device}</span></td>
+                      <td><span className="inline-flex items-center gap-1.5 text-[color:var(--text-soft)]">{l.device === "Desktop" ? <Monitor size={14} /> : <Smartphone size={14} />} {l.device === "Desktop" ? t("usr.desktop") : t("usr.mobile")}</span></td>
                       <td className="tabular text-[color:var(--text-soft)]">{l.ip}</td>
                       <td className="tabular text-[color:var(--text-soft)]">{fmtDate(l.when)}</td>
-                      <td><StatusBadge tone={l.status === "success" ? "ok" : "crit"}>{l.status === "success" ? "Success" : "Failed"}</StatusBadge></td>
+                      <td><StatusBadge tone={l.status === "success" ? "ok" : "crit"}>{l.status === "success" ? t("usr.success") : t("usr.failed")}</StatusBadge></td>
                     </tr>
                   ))}
                 </tbody>

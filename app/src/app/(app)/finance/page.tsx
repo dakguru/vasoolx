@@ -32,10 +32,10 @@ import { inr, inrCompact, fmtDate } from "@/lib/format";
 import type { Investment, Expense } from "@/lib/data/types";
 
 const TABS = [
-  { key: "cashbook", label: "Cash Book" },
-  { key: "receipts", label: "Receipts" },
-  { key: "cash", label: "Cash Management" },
-  { key: "recon", label: "Reconciliation" },
+  { key: "cashbook", labelKey: "fin.tabCashbook" },
+  { key: "receipts", labelKey: "fin.tabReceipts" },
+  { key: "cash", labelKey: "fin.tabCash" },
+  { key: "recon", labelKey: "fin.tabRecon" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -99,48 +99,48 @@ function Inner() {
     <>
       <TopBar />
       <PageHead
-        title="Finance"
-        subtitle={`${activeLine?.name ?? ""} · Cash management & ledger`}
+        title={t("nav.finance")}
+        subtitle={`${activeLine?.name ?? ""} · ${t("fin.subtitle")}`}
         actions={
           <>
-            <button className="chip" onClick={() => { setEditItem(null); setSheet(true); }}><Plus size={15} /> Add Entry</button>
-            <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5"><Download size={15} /> Export</button>
+            <button className="chip" onClick={() => { setEditItem(null); setSheet(true); }}><Plus size={15} /> {t("fin.addEntry")}</button>
+            <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5"><Download size={15} /> {t("common.export")}</button>
           </>
         }
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4">
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-          <StatTile label="Total Collections" value={inrCompact(totalCollections)} icon={<HandCoins size={16} />} color="var(--ok)" />
-          <StatTile label="Total Expenses" value={inrCompact(totalExpenses)} icon={<TrendingDown size={16} />} color="var(--crit)" />
-          <StatTile label="Net Collection" value={inrCompact(netCollection)} icon={<Scale size={16} />} color="var(--brand)" />
-          <StatTile label="Cash on Hand" value={inrCompact(cashOnHand)} icon={<Banknote size={16} />} color="#7c6bf0" sub={<span className="inline-flex items-center gap-1 text-[color:var(--ok)]"><BadgeCheck size={12} /> Reconciliation balanced</span>} />
+          <StatTile label={t("fin.totalCollections")} value={inrCompact(totalCollections)} icon={<HandCoins size={16} />} color="var(--ok)" />
+          <StatTile label={t("fin.totalExpenses")} value={inrCompact(totalExpenses)} icon={<TrendingDown size={16} />} color="var(--crit)" />
+          <StatTile label={t("fin.netCollection")} value={inrCompact(netCollection)} icon={<Scale size={16} />} color="var(--brand)" />
+          <StatTile label={t("fin.cashOnHand")} value={inrCompact(cashOnHand)} icon={<Banknote size={16} />} color="#7c6bf0" sub={<span className="inline-flex items-center gap-1 text-[color:var(--ok)]"><BadgeCheck size={12} /> {t("fin.reconBalanced")}</span>} />
         </div>
 
         <div className="segtab w-fit flex-wrap">
           {TABS.map((x) => (
-            <button key={x.key} data-active={tab === x.key} onClick={() => router.replace(x.key === "cashbook" ? "/finance" : `/finance?tab=${x.key}`)}>{x.label}</button>
+            <button key={x.key} data-active={tab === x.key} onClick={() => router.replace(x.key === "cashbook" ? "/finance" : `/finance?tab=${x.key}`)}>{t(x.labelKey)}</button>
           ))}
         </div>
 
         {tab === "cashbook" && (
           <Panel className="overflow-hidden">
             <PanelHead
-              title="Cash Book"
-              desc={`${isInv ? "Investments" : "Expenses"} · ${inr(total)} total`}
-              action={<div className="segtab"><button data-active={isInv} onClick={() => setSub("investment")}>Investment</button><button data-active={!isInv} onClick={() => setSub("expense")}>Expense</button></div>}
+              title={t("fin.tabCashbook")}
+              desc={t("fin.totalSuffix", { items: isInv ? t("fin.investmentsLabel") : t("fin.expensesLabel"), amount: inr(total) })}
+              action={<div className="segtab"><button data-active={isInv} onClick={() => setSub("investment")}>{t("fin.investment")}</button><button data-active={!isInv} onClick={() => setSub("expense")}>{t("fin.expense")}</button></div>}
             />
             <Toolbar>
-              <div className={`badge badge-${isInv ? "ok" : "crit"}`}>{isInv ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{isInv ? "Money In" : "Money Out"}</div>
-              <span className="text-[12px] text-[color:var(--text-faint)]">{items.length} entries</span>
-              <button className="ml-auto btn-primary h-8 px-3 rounded-lg text-[12.5px] font-semibold inline-flex items-center gap-1.5" onClick={() => { setEditItem(null); setSheet(true); }}><Plus size={14} /> Add {isInv ? "Investment" : "Expense"}</button>
+              <div className={`badge badge-${isInv ? "ok" : "crit"}`}>{isInv ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{isInv ? t("fin.moneyIn") : t("fin.moneyOut")}</div>
+              <span className="text-[12px] text-[color:var(--text-faint)]">{t("fin.entriesCount", { n: items.length })}</span>
+              <button className="ml-auto btn-primary h-8 px-3 rounded-lg text-[12.5px] font-semibold inline-flex items-center gap-1.5" onClick={() => { setEditItem(null); setSheet(true); }}><Plus size={14} /> {isInv ? t("fin.addInvestment") : t("fin.addExpense")}</button>
             </Toolbar>
             {items.length === 0 ? (
               <EmptyState icon={isInv ? <ArrowUpRight size={30} /> : <ArrowDownRight size={30} />} title={isInv ? t("fin.noInvestments") : t("fin.noExpenses")} desc={t("fin.noItemsMatch")} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="dt">
-                  <thead><tr><th>Date</th><th>Type</th><th>Method</th><th>Note</th><th className="text-right">Amount</th><th></th></tr></thead>
+                  <thead><tr><th>{t("dash.date")}</th><th>{t("fin.thType")}</th><th>{t("fin.thMethod")}</th><th>{t("fin.thNote")}</th><th className="text-right">{t("dash.thAmount")}</th><th></th></tr></thead>
                   <tbody>
                     {items.map((x) => (
                       <tr key={x.id}>
@@ -166,10 +166,10 @@ function Inner() {
 
         {tab === "receipts" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Receipts" desc={`${payments.length} collection receipts · ${inr(totalCollections)}`} icon={<Receipt size={15} />} />
+            <PanelHead title={t("fin.tabReceipts")} desc={t("fin.receiptsDesc", { n: payments.length, amount: inr(totalCollections) })} icon={<Receipt size={15} />} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>Date</th><th>Receipt No.</th><th>Customer</th><th>Method</th><th className="text-right">Amount</th><th>Status</th></tr></thead>
+                <thead><tr><th>{t("dash.date")}</th><th>{t("fin.thReceiptNo")}</th><th>{t("dash.customer")}</th><th>{t("fin.thMethod")}</th><th className="text-right">{t("dash.thAmount")}</th><th>{t("dash.thStatus")}</th></tr></thead>
                 <tbody>
                   {payments.slice(0, 40).map((p, i) => (
                     <tr key={p.id}>
@@ -178,10 +178,10 @@ function Inner() {
                       <td className="font-medium">{custName(p.customerId)}</td>
                       <td><StatusBadge tone={p.method === "cash" ? "neutral" : "info"} dot={false}>{p.method.toUpperCase()}</StatusBadge></td>
                       <td className="text-right tabular font-bold text-[color:var(--ok)]">{inr(p.amount)}</td>
-                      <td><StatusBadge tone="ok">Issued</StatusBadge></td>
+                      <td><StatusBadge tone="ok">{t("fin.issued")}</StatusBadge></td>
                     </tr>
                   ))}
-                  {payments.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-[color:var(--text-faint)]">No receipts yet</td></tr>}
+                  {payments.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-[color:var(--text-faint)]">{t("fin.noReceipts")}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -190,16 +190,16 @@ function Inner() {
 
         {tab === "cash" && (
           <div className="grid gap-3 md:grid-cols-3">
-            <StatTile label="Cash Inflow" value={inr(cashIn)} icon={<ArrowUpRight size={16} />} color="var(--ok)" />
-            <StatTile label="Cash Outflow" value={inr(cashOut)} icon={<ArrowDownRight size={16} />} color="var(--crit)" />
-            <StatTile label="Cash Balance" value={inr(cashIn - cashOut)} icon={<Wallet size={16} />} color="var(--brand)" />
+            <StatTile label={t("fin.cashInflow")} value={inr(cashIn)} icon={<ArrowUpRight size={16} />} color="var(--ok)" />
+            <StatTile label={t("fin.cashOutflow")} value={inr(cashOut)} icon={<ArrowDownRight size={16} />} color="var(--crit)" />
+            <StatTile label={t("fin.cashBalance")} value={inr(cashIn - cashOut)} icon={<Wallet size={16} />} color="var(--brand)" />
             <Panel className="md:col-span-3 p-4">
-              <PanelHead title="Cash Position" desc="Physical cash reconciliation" />
+              <PanelHead title={t("fin.cashPosition")} desc={t("fin.cashPositionDesc")} />
               <div className="p-4 grid gap-3 sm:grid-cols-2">
-                <CashRow label="Opening balance" value={inr(totalInvestment)} />
-                <CashRow label="Collections (cash)" value={`+ ${inr(cashIn)}`} tone="ok" />
-                <CashRow label="Expenses (cash)" value={`− ${inr(cashOut)}`} tone="crit" />
-                <CashRow label="Closing balance" value={inr(cashIn - cashOut)} bold />
+                <CashRow label={t("fin.openingBalance")} value={inr(totalInvestment)} />
+                <CashRow label={t("fin.collectionsCash")} value={`+ ${inr(cashIn)}`} tone="ok" />
+                <CashRow label={t("fin.expensesCash")} value={`− ${inr(cashOut)}`} tone="crit" />
+                <CashRow label={t("fin.closingBalance")} value={inr(cashIn - cashOut)} bold />
               </div>
             </Panel>
           </div>
@@ -208,15 +208,15 @@ function Inner() {
         {tab === "recon" && (
           <>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-              <StatTile label="Days Reconciled" value={`${balancedDays} / ${recon.length}`} icon={<CheckCircle2 size={16} />} color="var(--ok)" />
-              <StatTile label="Mismatches" value={String(recon.length - balancedDays)} icon={<AlertTriangle size={16} />} color="var(--crit)" />
-              <StatTile label="Total Verified" value={inrCompact(totalCollections)} icon={<Scale size={16} />} color="var(--brand)" />
+              <StatTile label={t("fin.daysReconciled")} value={`${balancedDays} / ${recon.length}`} icon={<CheckCircle2 size={16} />} color="var(--ok)" />
+              <StatTile label={t("fin.mismatches")} value={String(recon.length - balancedDays)} icon={<AlertTriangle size={16} />} color="var(--crit)" />
+              <StatTile label={t("fin.totalVerified")} value={inrCompact(totalCollections)} icon={<Scale size={16} />} color="var(--brand)" />
             </div>
             <Panel className="overflow-hidden">
-              <PanelHead title="Daily Reconciliation" desc="Recorded collections vs system balance" />
+              <PanelHead title={t("fin.dailyRecon")} desc={t("fin.dailyReconDesc")} />
               <div className="overflow-x-auto">
                 <table className="dt">
-                  <thead><tr><th>Date</th><th className="text-right">Receipts</th><th className="text-right">Collected</th><th className="text-right">Expected</th><th>Status</th></tr></thead>
+                  <thead><tr><th>{t("dash.date")}</th><th className="text-right">{t("fin.thReceipts")}</th><th className="text-right">{t("dash.thCollected")}</th><th className="text-right">{t("fin.thExpected")}</th><th>{t("dash.thStatus")}</th></tr></thead>
                   <tbody>
                     {recon.map((r) => (
                       <tr key={r.day}>
@@ -224,10 +224,10 @@ function Inner() {
                         <td className="text-right tabular">{r.count}</td>
                         <td className="text-right tabular font-semibold">{inr(r.collected)}</td>
                         <td className="text-right tabular text-[color:var(--text-soft)]">{inr(r.status === "balanced" ? r.collected : r.collected + 50)}</td>
-                        <td>{r.status === "balanced" ? <StatusBadge tone="ok"><CheckCircle2 size={11} /> Balanced</StatusBadge> : <StatusBadge tone="crit"><AlertTriangle size={11} /> Mismatch</StatusBadge>}</td>
+                        <td>{r.status === "balanced" ? <StatusBadge tone="ok"><CheckCircle2 size={11} /> {t("fin.balanced")}</StatusBadge> : <StatusBadge tone="crit"><AlertTriangle size={11} /> {t("fin.mismatch")}</StatusBadge>}</td>
                       </tr>
                     ))}
-                    {recon.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-[color:var(--text-faint)]">No collection data to reconcile</td></tr>}
+                    {recon.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-[color:var(--text-faint)]">{t("fin.noReconData")}</td></tr>}
                   </tbody>
                 </table>
               </div>

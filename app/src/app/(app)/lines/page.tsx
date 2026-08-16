@@ -27,11 +27,11 @@ export default function LinesPage() {
     <>
       <TopBar />
       <PageHead
-        title="Lines & Master Data"
-        subtitle={`${data.lines.length} workspaces configured`}
+        title={t("lns.title")}
+        subtitle={t("lns.subtitle", { n: data.lines.length })}
         actions={
           <>
-            <Link href="/settings" className="chip"><ChevronLeft size={15} /> Settings</Link>
+            <Link href="/settings" className="chip"><ChevronLeft size={15} /> {t("sb.settings")}</Link>
             <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={openNew}>
               <Plus size={15} /> {t("line.addLine")}
             </button>
@@ -48,13 +48,13 @@ export default function LinesPage() {
         ) : (
           <Panel className="overflow-hidden">
             <Toolbar>
-              <span className="text-[13px] font-bold text-[color:var(--text)]">Line Register</span>
-              <span className="ml-auto text-[12px] text-[color:var(--text-faint)]">{data.lines.length} lines</span>
+              <span className="text-[13px] font-bold text-[color:var(--text)]">{t("lns.register")}</span>
+              <span className="ml-auto text-[12px] text-[color:var(--text-faint)]">{t("lns.linesCount", { n: data.lines.length })}</span>
             </Toolbar>
             <div className="overflow-x-auto">
               <table className="dt">
                 <thead>
-                  <tr><th>Line</th><th>Type</th><th className="text-right">Customers</th><th className="text-right">Active Loans</th><th className="text-right">Rate</th><th></th></tr>
+                  <tr><th>{t("rep.line")}</th><th>{t("fin.thType")}</th><th className="text-right">{t("fld.thCustomers")}</th><th className="text-right">{t("sb.activeLoans")}</th><th className="text-right">{t("lns.thRate")}</th><th></th></tr>
                 </thead>
                 <tbody>
                   {data.lines.map((l) => (
@@ -73,9 +73,9 @@ export default function LinesPage() {
                         <div className="flex gap-1.5 justify-end">
                           <button onClick={() => openEdit(l)} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)]" aria-label="Edit"><Pencil size={14} /></button>
                           <button onClick={() => {
-                            if (confirm(`Delete line "${l.name}"? This removes its data.`)) {
+                            if (confirm(t("lns.deleteConfirm", { name: l.name }))) {
                               const success = deleteLine(l.id);
-                              if (!success) alert(`Cannot delete "${l.name}" — it has active loans. Close or mark all loans as bad first.`);
+                              if (!success) alert(t("lns.deleteFail", { name: l.name }));
                             }
                           }} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]" aria-label="Delete"><Trash2 size={14} /></button>
                         </div>

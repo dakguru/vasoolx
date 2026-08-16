@@ -52,10 +52,10 @@ import { inr, inrCompact, fmtDate } from "@/lib/format";
 import type { Customer } from "@/lib/data/types";
 
 const TABS = [
-  { key: "directory", label: "Directory", Icon: Contact },
-  { key: "groups", label: "Groups", Icon: UsersRound },
-  { key: "documents", label: "Documents", Icon: FileText },
-  { key: "history", label: "History", Icon: History },
+  { key: "directory", labelKey: "cust.tabDirectory", Icon: Contact },
+  { key: "groups", labelKey: "cust.tabGroups", Icon: UsersRound },
+  { key: "documents", labelKey: "cust.tabDocuments", Icon: FileText },
+  { key: "history", labelKey: "cust.tabHistory", Icon: History },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -97,13 +97,13 @@ function Inner() {
     <>
       <TopBar />
       <PageHead
-        title="Customers"
-        subtitle={`${activeLine?.name ?? ""} · ${customers.length} customers`}
+        title={t("nav.customers")}
+        subtitle={`${activeLine?.name ?? ""} · ${t("cust.subtitleCount", { count: customers.length })}`}
         actions={
           customers.length > 0 ? (
             <>
-              <button className="chip" onClick={() => router.push("/reports/customer")}><Download size={15} /> Export</button>
-              <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={() => setSheet(true)}><Plus size={15} /> Add Customer</button>
+              <button className="chip" onClick={() => router.push("/reports/customer")}><Download size={15} /> {t("common.export")}</button>
+              <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={() => setSheet(true)}><Plus size={15} /> {t("cust.addCustomer")}</button>
             </>
           ) : undefined
         }
@@ -118,32 +118,32 @@ function Inner() {
         ) : (
           <>
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-              <StatTile label="Total Customers" value={String(customers.length)} icon={<Users size={16} />} color="var(--brand)" />
-              <StatTile label="With Active Loans" value={String(withLoans)} icon={<Landmark size={16} />} color="#7c6bf0" />
-              <StatTile label="Total Outstanding" value={inrCompact(totalOutstanding)} icon={<Wallet size={16} />} color="var(--warn)" />
-              <StatTile label="Collection Areas" value={String(areas.length)} icon={<MapPin size={16} />} color="var(--ok)" />
+              <StatTile label={t("cust.totalCustomers")} value={String(customers.length)} icon={<Users size={16} />} color="var(--brand)" />
+              <StatTile label={t("cust.withActiveLoans")} value={String(withLoans)} icon={<Landmark size={16} />} color="#7c6bf0" />
+              <StatTile label={t("cust.totalOutstanding")} value={inrCompact(totalOutstanding)} icon={<Wallet size={16} />} color="var(--warn)" />
+              <StatTile label={t("cust.collectionAreas")} value={String(areas.length)} icon={<MapPin size={16} />} color="var(--ok)" />
             </div>
 
             <div className="segtab w-fit flex-wrap">
               {TABS.map((x) => (
-                <button key={x.key} data-active={tab === x.key} onClick={() => router.replace(x.key === "directory" ? "/customers" : `/customers?tab=${x.key}`)}>{x.label}</button>
+                <button key={x.key} data-active={tab === x.key} onClick={() => router.replace(x.key === "directory" ? "/customers" : `/customers?tab=${x.key}`)}>{t(x.labelKey)}</button>
               ))}
             </div>
 
             {tab === "directory" && (
               <Panel className="overflow-hidden">
                 <Toolbar>
-                  <SearchInput value={q} onChange={setQ} placeholder="Search by name or phone…" className="w-full sm:w-72" />
+                  <SearchInput value={q} onChange={setQ} placeholder={t("cust.searchByNamePhone")} className="w-full sm:w-72" />
                   <select value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)} className="field-erp h-9 px-2.5 text-[13px] appearance-none cursor-pointer">
-                    <option value="">All Areas</option>
+                    <option value="">{t("dash.allAreas")}</option>
                     {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
-                  <span className="ml-auto text-[12px] text-[color:var(--text-faint)] tabular">{filtered.length} of {customers.length}</span>
+                  <span className="ml-auto text-[12px] text-[color:var(--text-faint)] tabular">{t("cust.ofCount", { filtered: filtered.length, total: customers.length })}</span>
                 </Toolbar>
                 <div className="overflow-x-auto">
                   <table className="dt">
                     <thead>
-                      <tr><th>Customer</th><th>Phone</th><th>Area</th><th className="text-right">Paid</th><th className="text-right">Outstanding</th><th>Repayment</th><th>Status</th><th></th></tr>
+                      <tr><th>{t("dash.customer")}</th><th>{t("cust.thPhone")}</th><th>{t("dash.area")}</th><th className="text-right">{t("cust.thPaid")}</th><th className="text-right">{t("dash.outstanding")}</th><th>{t("cust.thRepayment")}</th><th>{t("dash.thStatus")}</th><th></th></tr>
                     </thead>
                     <tbody>
                       {filtered.map((c) => {
@@ -161,12 +161,12 @@ function Inner() {
                             <td className="text-right tabular text-[color:var(--ok)] font-semibold">{loan ? inr(paid) : "—"}</td>
                             <td className="text-right tabular font-bold">{loan ? inr(outstanding) : "—"}</td>
                             <td>{loan ? <div className="flex items-center gap-2 min-w-[110px]"><div className="w-16"><ProgressBar value={pct} color={pct >= 0.99 ? "var(--ok)" : "var(--brand)"} /></div><span className="text-[11px] tabular text-[color:var(--text-soft)] w-8">{Math.round(pct * 100)}%</span></div> : <span className="text-[color:var(--text-faint)]">—</span>}</td>
-                            <td>{loan ? <StatusBadge tone={loan.status === "bad" ? "crit" : loan.status === "closed" ? "neutral" : "ok"}>{loan.status === "bad" ? "Overdue" : loan.status === "closed" ? "Closed" : "Active"}</StatusBadge> : <StatusBadge tone="neutral">No Loan</StatusBadge>}</td>
+                            <td>{loan ? <StatusBadge tone={loan.status === "bad" ? "crit" : loan.status === "closed" ? "neutral" : "ok"}>{loan.status === "bad" ? t("common.overdue") : loan.status === "closed" ? t("common.closed") : t("common.active")}</StatusBadge> : <StatusBadge tone="neutral">{t("cust.noLoan")}</StatusBadge>}</td>
                             <td><ChevronRight size={16} className="text-[color:var(--text-faint)]" /></td>
                           </tr>
                         );
                       })}
-                      {filtered.length === 0 && <tr><td colSpan={8} className="text-center text-[color:var(--text-faint)] py-8">No customers match your filters</td></tr>}
+                      {filtered.length === 0 && <tr><td colSpan={8} className="text-center text-[color:var(--text-faint)] py-8">{t("cust.noMatch")}</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -188,7 +188,8 @@ function Inner() {
 /* ---------------- Groups: customers grouped by area ---------------- */
 function GroupsView({ customers, areas, lineId, onOpen }: { customers: Customer[]; areas: { id: string; name: string }[]; lineId: string; onOpen: (id: string) => void }) {
   const { data } = useStore();
-  const groups = [...areas.map((a) => ({ id: a.id, name: a.name })), { id: "none", name: "Unassigned" }]
+  const { t } = useI18n();
+  const groups = [...areas.map((a) => ({ id: a.id, name: a.name })), { id: "none", name: t("cust.unassigned") }]
     .map((g) => {
       const members = customers.filter((c) => (g.id === "none" ? !c.areaId : c.areaId === g.id));
       const outstanding = members.reduce((s, c) => { const l = customerActiveLoan(data, c.id); return s + (l ? loanOutstanding(data, l) : 0); }, 0);
@@ -206,7 +207,7 @@ function GroupsView({ customers, areas, lineId, onOpen }: { customers: Customer[
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5">
               <span className="w-10 h-10 rounded-xl grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)]"><MapPin size={19} /></span>
-              <div><div className="font-bold text-[color:var(--text)]">{g.name}</div><div className="text-[11px] text-[color:var(--text-faint)]">{g.members.length} customers</div></div>
+              <div><div className="font-bold text-[color:var(--text)]">{g.name}</div><div className="text-[11px] text-[color:var(--text-faint)]">{t("cust.customersCount", { n: g.members.length })}</div></div>
             </div>
             <DonutRing value={g.rate} size={44} stroke={5} color={g.rate >= 0.5 ? "var(--ok)" : "var(--warn)"} label={`${Math.round(g.rate * 100)}`} />
           </div>
@@ -217,10 +218,10 @@ function GroupsView({ customers, areas, lineId, onOpen }: { customers: Customer[
             {g.members.length > 6 && <span className="w-7 h-7 rounded-full grid place-items-center bg-[color:var(--panel-3)] text-[color:var(--text-faint)] text-[10px] font-bold ring-2 ring-[color:var(--panel)]">+{g.members.length - 6}</span>}
           </div>
           <div className="grid grid-cols-2 gap-2 text-[12px] border-t border-[color:var(--line)] pt-3">
-            <div><div className="text-[color:var(--text-faint)]">Collected</div><div className="font-bold tabular text-[color:var(--ok)]">{inrCompact(g.paid)}</div></div>
-            <div><div className="text-[color:var(--text-faint)]">Outstanding</div><div className="font-bold tabular">{inrCompact(g.outstanding)}</div></div>
+            <div><div className="text-[color:var(--text-faint)]">{t("cust.collected")}</div><div className="font-bold tabular text-[color:var(--ok)]">{inrCompact(g.paid)}</div></div>
+            <div><div className="text-[color:var(--text-faint)]">{t("cust.outstanding")}</div><div className="font-bold tabular">{inrCompact(g.outstanding)}</div></div>
           </div>
-          <button onClick={() => g.members[0] && onOpen(g.members[0].id)} className="mt-3 w-full h-8 rounded-lg chip justify-center text-[12.5px]">View customers <ChevronRight size={13} /></button>
+          <button onClick={() => g.members[0] && onOpen(g.members[0].id)} className="mt-3 w-full h-8 rounded-lg chip justify-center text-[12.5px]">{t("cust.viewCustomers")} <ChevronRight size={13} /></button>
         </Panel>
       ))}
     </div>
@@ -229,12 +230,14 @@ function GroupsView({ customers, areas, lineId, onOpen }: { customers: Customer[
 
 /* ---------------- Documents: KYC compliance ---------------- */
 const DOC_TYPES = ["ID Proof", "Address Proof", "Photo", "Loan Agreement"];
+const DOC_TYPE_KEYS = ["cust.docIdProof", "cust.docAddressProof", "cust.docPhoto", "cust.docLoanAgreement"];
 function docStatus(seed: string, i: number): "verified" | "pending" | "missing" {
   let h = 0;
   for (const ch of seed + i) h = (h * 31 + ch.charCodeAt(0)) % 100;
   return h < 62 ? "verified" : h < 85 ? "pending" : "missing";
 }
 function DocumentsView({ customers, onOpen }: { customers: Customer[]; onOpen: (id: string) => void }) {
+  const { t } = useI18n();
   const rows = customers.map((c) => {
     const statuses = DOC_TYPES.map((_, i) => docStatus(c.id, i));
     const verified = statuses.filter((s) => s === "verified").length;
@@ -249,27 +252,27 @@ function DocumentsView({ customers, onOpen }: { customers: Customer[]; onOpen: (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-[auto_1fr] items-center">
         <Panel className="p-4 flex items-center gap-4">
-          <DonutRing value={verifiedDocs / Math.max(1, totalDocs)} size={90} stroke={10} color="var(--ok)" label={`${Math.round((verifiedDocs / Math.max(1, totalDocs)) * 100)}%`} sub="Verified" />
+          <DonutRing value={verifiedDocs / Math.max(1, totalDocs)} size={90} stroke={10} color="var(--ok)" label={`${Math.round((verifiedDocs / Math.max(1, totalDocs)) * 100)}%`} sub={t("cust.verified")} />
           <div className="space-y-2">
-            <DocLegend Icon={FileCheck2} tone="ok" label="Verified" n={verifiedDocs} />
-            <DocLegend Icon={FileClock} tone="warn" label="Pending" n={pendingDocs} />
-            <DocLegend Icon={FileX2} tone="crit" label="Missing" n={missingDocs} />
+            <DocLegend Icon={FileCheck2} tone="ok" label={t("cust.verified")} n={verifiedDocs} />
+            <DocLegend Icon={FileClock} tone="warn" label={t("cust.pending")} n={pendingDocs} />
+            <DocLegend Icon={FileX2} tone="crit" label={t("cust.missing")} n={missingDocs} />
           </div>
         </Panel>
         <Panel className="p-4 flex items-center gap-3">
           <span className="w-11 h-11 rounded-xl grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)]"><ShieldCheck size={22} /></span>
           <div>
-            <div className="font-bold text-[color:var(--text)]">KYC & Document Compliance</div>
-            <div className="text-[12.5px] text-[color:var(--text-soft)]">Track identity, address and agreement documents for every customer to stay audit-ready.</div>
+            <div className="font-bold text-[color:var(--text)]">{t("cust.kycTitle")}</div>
+            <div className="text-[12.5px] text-[color:var(--text-soft)]">{t("cust.kycDesc")}</div>
           </div>
         </Panel>
       </div>
 
       <Panel className="overflow-hidden">
-        <PanelHead title="Document Register" desc={`${customers.length} customer files`} />
+        <PanelHead title={t("cust.documentRegister")} desc={t("cust.customerFiles", { n: customers.length })} />
         <div className="overflow-x-auto">
           <table className="dt">
-            <thead><tr><th>Customer</th>{DOC_TYPES.map((d) => <th key={d} className="text-center">{d}</th>)}<th>Compliance</th></tr></thead>
+            <thead><tr><th>{t("dash.customer")}</th>{DOC_TYPE_KEYS.map((k) => <th key={k} className="text-center">{t(k)}</th>)}<th>{t("cust.compliance")}</th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.c.id} className="cursor-pointer" onClick={() => onOpen(r.c.id)}>
@@ -297,7 +300,8 @@ function DocDot({ status }: { status: "verified" | "pending" | "missing" }) {
 /* ---------------- History: activity timeline ---------------- */
 function HistoryView({ lineId, onOpen }: { lineId: string; onOpen: (id: string) => void }) {
   const { data } = useStore();
-  const custName = (id: string) => data.customers.find((c) => c.id === id)?.name ?? "Customer";
+  const { t } = useI18n();
+  const custName = (id: string) => data.customers.find((c) => c.id === id)?.name ?? t("dash.customer");
   const events = [
     ...data.payments.filter((p) => inLine(p.lineId, lineId)).map((p) => ({ id: `p-${p.id}`, cid: p.customerId, kind: "payment" as const, amount: p.amount, date: p.date })),
     ...data.loans.filter((l) => inLine(l.lineId, lineId)).map((l) => ({ id: `l-${l.id}`, cid: l.customerId, kind: "loan" as const, amount: l.principal, date: l.createdAt })),
@@ -305,7 +309,7 @@ function HistoryView({ lineId, onOpen }: { lineId: string; onOpen: (id: string) 
 
   return (
     <Panel>
-      <PanelHead title="Customer History" desc={`${events.length} recent events across all customers`} />
+      <PanelHead title={t("cust.customerHistory")} desc={t("cust.recentEvents", { n: events.length })} />
       <div className="p-4">
         <div className="relative pl-6">
           <span className="absolute left-[9px] top-2 bottom-2 w-px bg-[color:var(--line)]" />
@@ -315,12 +319,12 @@ function HistoryView({ lineId, onOpen }: { lineId: string; onOpen: (id: string) 
                 {e.kind === "payment" ? <HandCoins size={8} className="text-white" /> : <Landmark size={8} className="text-white" />}
               </span>
               <div className="text-[13px] font-semibold text-[color:var(--text)] group-hover:text-[color:var(--brand)] transition">
-                {e.kind === "payment" ? `Collected ${inr(e.amount)} from ${custName(e.cid)}` : `Loan of ${inr(e.amount)} issued to ${custName(e.cid)}`}
+                {e.kind === "payment" ? t("cust.collectedFrom", { amount: inr(e.amount), name: custName(e.cid) }) : t("cust.loanIssuedTo", { amount: inr(e.amount), name: custName(e.cid) })}
               </div>
               <div className="text-[11.5px] text-[color:var(--text-faint)]">{fmtDate(e.date)}</div>
             </button>
           ))}
-          {events.length === 0 && <div className="text-[13px] text-[color:var(--text-faint)] py-6 text-center">No history yet</div>}
+          {events.length === 0 && <div className="text-[13px] text-[color:var(--text-faint)] py-6 text-center">{t("cust.noHistory")}</div>}
         </div>
       </div>
     </Panel>

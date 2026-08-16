@@ -62,7 +62,7 @@ export default function CustomerDetailPage() {
   if (!customer) {
     return (
       <main className="px-4 md:px-6 py-6">
-        <Link href="/customers" className="chip mb-4"><ChevronLeft size={15} /> Back to Directory</Link>
+        <Link href="/customers" className="chip mb-4"><ChevronLeft size={15} /> {t("cd.backToDirectory")}</Link>
         <Panel className="py-16 text-center text-[color:var(--text-soft)]">{t("fin.noItemsMatch")}</Panel>
       </main>
     );
@@ -72,21 +72,21 @@ export default function CustomerDetailPage() {
   const paid = loans.reduce((s, l) => s + loanPaid(data, l.id), 0);
   const outstanding = loans.filter((l) => l.status === "active").reduce((s, l) => s + loanOutstanding(data, l), 0);
   const ar = areaName(data, customer.areaId);
-  const agent = data.members.find((m) => m.lineId === customer.lineId)?.name ?? "Unassigned";
+  const agent = data.members.find((m) => m.lineId === customer.lineId)?.name ?? t("cust.unassigned");
   const hasBad = loans.some((l) => l.status === "bad");
   const hasActive = loans.some((l) => l.status === "active");
-  const custStatus = hasBad ? { tone: "crit" as const, label: "Overdue" } : hasActive ? { tone: "ok" as const, label: "Active" } : { tone: "neutral" as const, label: "Inactive" };
+  const custStatus = hasBad ? { tone: "crit" as const, label: t("common.overdue") } : hasActive ? { tone: "ok" as const, label: t("common.active") } : { tone: "neutral" as const, label: t("cd.inactive") };
   const allPays = data.payments.filter((p) => p.customerId === customer.id).sort((a, b) => +new Date(b.date) - +new Date(a.date));
 
   function remove() {
     if (confirm(t("cust.deleteConfirm"))) {
       const success = deleteCustomer(customer!.id);
       if (success) router.replace("/customers");
-      else alert("Cannot delete this customer — they have active loans. Close all loans first.");
+      else alert(t("cd.deleteFail"));
     }
   }
   function remind() {
-    const msg = `Hi ${customer!.name}, this is a friendly reminder from ${activeLine?.name}. Your outstanding balance is ${inr(outstanding)}. Kindly pay your due. Thank you.`;
+    const msg = t("cd.reminderMsg", { name: customer!.name, line: activeLine?.name ?? "VasoolX", amount: inr(outstanding) });
     const phone = customer!.phone ? `91${customer!.phone}` : "";
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
   }
@@ -98,10 +98,10 @@ export default function CustomerDetailPage() {
   }
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: "overview", label: "Overview" },
-    { key: "loans", label: `Loans (${loans.length})` },
-    { key: "payments", label: `Payments (${allPays.length})` },
-    { key: "activity", label: "Activity" },
+    { key: "overview", label: t("cd.tabOverview") },
+    { key: "loans", label: t("cd.tabLoans", { n: loans.length }) },
+    { key: "payments", label: t("cd.tabPayments", { n: allPays.length }) },
+    { key: "activity", label: t("cd.tabActivity") },
   ];
 
   const LoansList = (
@@ -123,27 +123,27 @@ export default function CustomerDetailPage() {
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-[color:var(--text)]">{t("cust.loanNo")} #{loans.length - li}</span>
                   <StatusBadge tone={loan.status === "bad" ? "crit" : loan.status === "closed" ? "neutral" : "ok"}>
-                    {loan.status === "bad" ? "Overdue" : loan.status === "closed" ? "Closed" : "Active"}
+                    {loan.status === "bad" ? t("common.overdue") : loan.status === "closed" ? t("common.closed") : t("common.active")}
                   </StatusBadge>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-[color:var(--text)] tabular">{inr(out)}</div>
-                  <div className="text-[11px] text-[color:var(--text-faint)]">Outstanding</div>
+                  <div className="text-[11px] text-[color:var(--text-faint)]">{t("dash.outstanding")}</div>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3 text-[13px]">
-                <Meta label="Principal" value={inr(loan.principal)} />
+                <Meta label={t("rec.thPrincipal")} value={inr(loan.principal)} />
                 <Meta label={t("rep.disbursed")} value={inr(loan.disbursed)} />
                 <Meta label={`${loan.installmentAmount} × ${loan.installments}`} value={t(`line.${loan.type}`)} />
               </div>
               <div className="mt-3"><ProgressBar value={pct} color={pct >= 0.99 ? "var(--ok)" : "var(--brand)"} height={7} /></div>
               <div className="flex justify-between mt-1.5 text-[11px] text-[color:var(--text-soft)] tabular">
-                <span>{inr(lp)} paid</span><span>{Math.round(pct * 100)}%</span>
+                <span>{t("cd.paidAmount", { amount: inr(lp) })}</span><span>{Math.round(pct * 100)}%</span>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
                 {loan.status === "active" && (
                   <>
-                    <button onClick={() => quickCollect(loan)} className="btn-primary h-8 px-3 rounded-lg text-[12.5px] font-semibold inline-flex items-center gap-1.5"><Check size={14} /> Collect {inr(Math.min(loan.installmentAmount, out))}</button>
+                    <button onClick={() => quickCollect(loan)} className="btn-primary h-8 px-3 rounded-lg text-[12.5px] font-semibold inline-flex items-center gap-1.5"><Check size={14} /> {t("cd.collectAmount", { amount: inr(Math.min(loan.installmentAmount, out)) })}</button>
                     <button onClick={() => setLoanStatus(loan.id, "closed")} className="chip h-8">{t("cust.closeLoan")}</button>
                     <button onClick={() => setLoanStatus(loan.id, "bad")} className="chip h-8">{t("cust.markBad")}</button>
                   </>
@@ -151,17 +151,17 @@ export default function CustomerDetailPage() {
                 {loan.status !== "active" && (
                   <button onClick={() => setLoanStatus(loan.id, "active")} className="chip h-8">{t("cust.reopenLoan")}</button>
                 )}
-                <button onClick={() => { setEditLoan(loan); setLoanOpen(true); }} className="h-8 px-3 rounded-lg text-[12.5px] font-medium text-[color:var(--brand)] hover:bg-[color:var(--brand)]/10">Edit</button>
-                <button onClick={() => { if (confirm(t("common.deleteConfirm") || "Delete this loan and all its payments?")) deleteLoan(loan.id); }} className="h-8 px-3 rounded-lg text-[12.5px] font-medium text-[color:var(--crit)] hover:bg-[color:var(--crit)]/10">Delete</button>
+                <button onClick={() => { setEditLoan(loan); setLoanOpen(true); }} className="h-8 px-3 rounded-lg text-[12.5px] font-medium text-[color:var(--brand)] hover:bg-[color:var(--brand)]/10">{t("common.edit")}</button>
+                <button onClick={() => { if (confirm(t("cd.loanDelete"))) deleteLoan(loan.id); }} className="h-8 px-3 rounded-lg text-[12.5px] font-medium text-[color:var(--crit)] hover:bg-[color:var(--crit)]/10">{t("common.delete")}</button>
                 <button onClick={() => setExpanded(isOpen ? null : loan.id)} className="ml-auto flex items-center gap-1 text-[12.5px] font-semibold text-[color:var(--brand)]">
-                  Schedule <ChevronDown size={15} className={isOpen ? "rotate-180 transition" : "transition"} />
+                  {t("cd.schedule")} <ChevronDown size={15} className={isOpen ? "rotate-180 transition" : "transition"} />
                 </button>
               </div>
             </div>
             {isOpen && (
               <div className="border-t border-[color:var(--line)] p-4 bg-[color:var(--panel-2)] animate-fade-in grid md:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-[12px] font-semibold text-[color:var(--text)] mb-2 uppercase tracking-wide">Payment Schedule</div>
+                  <div className="text-[12px] font-semibold text-[color:var(--text)] mb-2 uppercase tracking-wide">{t("cd.paymentSchedule")}</div>
                   <div className="max-h-64 overflow-y-auto rounded-lg border border-[color:var(--line)]">
                     {schedule.map((s) => (
                       <div key={s.index} className="flex items-center justify-between px-3 py-1.5 border-b border-[color:var(--line)] last:border-0 text-[12.5px]">
@@ -180,9 +180,9 @@ export default function CustomerDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-[12px] font-semibold text-[color:var(--text)] mb-2 uppercase tracking-wide">Payments</div>
+                  <div className="text-[12px] font-semibold text-[color:var(--text)] mb-2 uppercase tracking-wide">{t("cust.payments")}</div>
                   {pays.length === 0 ? (
-                    <div className="text-[12.5px] text-[color:var(--text-faint)] px-1">No payments yet</div>
+                    <div className="text-[12.5px] text-[color:var(--text-faint)] px-1">{t("cd.noPayments")}</div>
                   ) : (
                     <div className="max-h-64 overflow-y-auto rounded-lg border border-[color:var(--line)]">
                       {pays.map((p) => (
@@ -192,7 +192,7 @@ export default function CustomerDetailPage() {
                           <div className="text-right text-[color:var(--ok)] font-bold tabular">+{inr(p.amount)}</div>
                           <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition ml-3">
                             <button onClick={() => setPaySheet(p)} className="w-6 h-6 rounded-md grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)]"><Pencil size={12} /></button>
-                            <button onClick={() => { if (confirm(t("common.deleteConfirm") || "Delete?")) deletePayment(p.id); }} className="w-6 h-6 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]"><Trash2 size={12} /></button>
+                            <button onClick={() => { if (confirm(t("cd.deletePayment"))) deletePayment(p.id); }} className="w-6 h-6 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]"><Trash2 size={12} /></button>
                           </div>
                         </div>
                       ))}
@@ -211,10 +211,10 @@ export default function CustomerDetailPage() {
     <>
       <main className="px-4 md:px-6 py-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <Link href="/customers" className="chip"><ChevronLeft size={15} /> Directory</Link>
+          <Link href="/customers" className="chip"><ChevronLeft size={15} /> {t("cd.directory")}</Link>
           <div className="flex gap-2">
-            <button onClick={() => setLoanOpen(true)} className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5"><Plus size={15} /> Issue Loan</button>
-            <button onClick={() => setEditOpen(true)} className="chip h-9"><Pencil size={15} /> Edit</button>
+            <button onClick={() => setLoanOpen(true)} className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5"><Plus size={15} /> {t("cd.issueLoan")}</button>
+            <button onClick={() => setEditOpen(true)} className="chip h-9"><Pencil size={15} /> {t("common.edit")}</button>
             <button onClick={remove} className="chip h-9 text-[color:var(--crit)] border-[color:var(--crit-line)]"><Trash2 size={15} /></button>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function CustomerDetailPage() {
                 <span className="flex items-center gap-1"><Hash size={13} /> CUST-{customer.id.slice(-6).toUpperCase()}</span>
                 {customer.phone && <span className="flex items-center gap-1"><Phone size={13} /> {customer.phone}</span>}
                 {ar && <span className="flex items-center gap-1"><MapPin size={13} /> {ar}</span>}
-                <span className="flex items-center gap-1"><UserRound size={13} /> Agent: {agent}</span>
+                <span className="flex items-center gap-1"><UserRound size={13} /> {t("cd.agentLabel", { name: agent })}</span>
               </div>
               {(customer.address || customer.notes) && (
                 <div className="mt-2.5 space-y-1 text-[12.5px]">
@@ -245,8 +245,8 @@ export default function CustomerDetailPage() {
             </div>
             {customer.phone && (
               <div className="flex gap-2">
-                <button onClick={() => { window.location.href = `tel:${customer.phone}`; }} className="chip h-9"><Phone size={15} /> Call</button>
-                <button onClick={remind} className="chip h-9"><MessageCircle size={15} /> Remind</button>
+                <button onClick={() => { window.location.href = `tel:${customer.phone}`; }} className="chip h-9"><Phone size={15} /> {t("cust.call")}</button>
+                <button onClick={remind} className="chip h-9"><MessageCircle size={15} /> {t("cust.remind")}</button>
               </div>
             )}
           </div>
@@ -254,10 +254,10 @@ export default function CustomerDetailPage() {
 
         {/* Stat tiles */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-          <StatTile label="Total Borrowed" value={inr(borrowed)} icon={<Landmark size={16} />} color="var(--brand)" />
-          <StatTile label="Total Collected" value={inr(paid)} icon={<HandCoins size={16} />} color="var(--ok)" />
-          <StatTile label="Outstanding" value={inr(outstanding)} icon={<Wallet size={16} />} color="var(--warn)" />
-          <StatTile label="Consistency" value={`${borrowed > 0 ? Math.round((paid / (paid + outstanding || 1)) * 100) : 0}%`} icon={<TrendingUp size={16} />} color="#7c6bf0" />
+          <StatTile label={t("cd.totalBorrowed")} value={inr(borrowed)} icon={<Landmark size={16} />} color="var(--brand)" />
+          <StatTile label={t("ln.totalCollected")} value={inr(paid)} icon={<HandCoins size={16} />} color="var(--ok)" />
+          <StatTile label={t("dash.outstanding")} value={inr(outstanding)} icon={<Wallet size={16} />} color="var(--warn)" />
+          <StatTile label={t("cd.consistency")} value={`${borrowed > 0 ? Math.round((paid / (paid + outstanding || 1)) * 100) : 0}%`} icon={<TrendingUp size={16} />} color="#7c6bf0" />
         </div>
 
         {/* Tabs */}
@@ -271,7 +271,7 @@ export default function CustomerDetailPage() {
           <div className="grid gap-4 xl:grid-cols-3 items-start">
             <div className="xl:col-span-2">{LoansList}</div>
             <Panel>
-              <PanelHead title="Recent Activity" />
+              <PanelHead title={t("cd.recentActivity")} />
               <Timeline pays={allPays} name={customer.name} />
             </Panel>
           </div>
@@ -279,10 +279,10 @@ export default function CustomerDetailPage() {
         {tab === "loans" && LoansList}
         {tab === "payments" && (
           <Panel className="overflow-hidden">
-            <PanelHead title="Payment History" desc={`${allPays.length} payments · ${inr(paid)} total`} />
+            <PanelHead title={t("cd.paymentHistory")} desc={t("cd.paymentsTotal", { n: allPays.length, amount: inr(paid) })} />
             <div className="overflow-x-auto">
               <table className="dt">
-                <thead><tr><th>Date</th><th>Method</th><th>Note</th><th className="text-right">Amount</th><th></th></tr></thead>
+                <thead><tr><th>{t("dash.date")}</th><th>{t("fin.thMethod")}</th><th>{t("fin.thNote")}</th><th className="text-right">{t("dash.thAmount")}</th><th></th></tr></thead>
                 <tbody>
                   {allPays.map((p) => (
                     <tr key={p.id}>
@@ -293,12 +293,12 @@ export default function CustomerDetailPage() {
                       <td>
                         <div className="flex gap-1.5 justify-end">
                           <button onClick={() => setPaySheet(p)} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)]"><Pencil size={13} /></button>
-                          <button onClick={() => { if (confirm(t("common.deleteConfirm") || "Delete?")) deletePayment(p.id); }} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]"><Trash2 size={13} /></button>
+                          <button onClick={() => { if (confirm(t("cd.deletePayment"))) deletePayment(p.id); }} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]"><Trash2 size={13} /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {allPays.length === 0 && <tr><td colSpan={5} className="text-center text-[color:var(--text-faint)] py-8">No payments recorded</td></tr>}
+                  {allPays.length === 0 && <tr><td colSpan={5} className="text-center text-[color:var(--text-faint)] py-8">{t("cd.noPaymentsRecorded")}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -306,7 +306,7 @@ export default function CustomerDetailPage() {
         )}
         {tab === "activity" && (
           <Panel>
-            <PanelHead title="Activity Timeline" />
+            <PanelHead title={t("cd.activityTimeline")} />
             <Timeline pays={allPays} name={customer.name} full />
           </Panel>
         )}
@@ -329,8 +329,9 @@ function Meta({ label, value }: { label: string; value: string }) {
 }
 
 function Timeline({ pays, name, full }: { pays: Payment[]; name: string; full?: boolean }) {
+  const { t } = useI18n();
   const list = full ? pays : pays.slice(0, 6);
-  if (list.length === 0) return <div className="px-4 py-8 text-center text-[13px] text-[color:var(--text-faint)]">No activity yet</div>;
+  if (list.length === 0) return <div className="px-4 py-8 text-center text-[13px] text-[color:var(--text-faint)]">{t("cd.noActivity")}</div>;
   return (
     <div className="p-4">
       <div className="relative pl-5">
@@ -338,7 +339,7 @@ function Timeline({ pays, name, full }: { pays: Payment[]; name: string; full?: 
         {list.map((p) => (
           <div key={p.id} className="relative pb-4 last:pb-0">
             <span className="absolute -left-[15px] top-1 w-2.5 h-2.5 rounded-full bg-[color:var(--ok)] ring-2 ring-[color:var(--panel)]" />
-            <div className="text-[13px] font-semibold text-[color:var(--text)]">Payment collected · {inr(p.amount)}</div>
+            <div className="text-[13px] font-semibold text-[color:var(--text)]">{t("cd.paymentCollected", { amount: inr(p.amount) })}</div>
             <div className="text-[11.5px] text-[color:var(--text-faint)]">{fmtDate(p.date)} · {p.method.toUpperCase()}{p.note ? ` · ${p.note}` : ""}</div>
           </div>
         ))}

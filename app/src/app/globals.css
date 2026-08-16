@@ -184,6 +184,17 @@ body {
   height: 100%;
 }
 
+/* Prevent stray desktop-width content from creating a horizontal scroll /
+   sideways shift on mobile. Wide tables/charts scroll inside their own
+   overflow-x-auto containers instead. `clip` (not `hidden`) is used so the
+   body does not become a scroll container — that would break the sticky
+   top bars. */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   color: var(--text);
   font-family: var(--font-sans);
@@ -357,6 +368,9 @@ body {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     box-shadow: var(--elev-1);
+    /* Allow panels to shrink inside grid/flex parents so wide children
+       don't push the panel past the viewport on mobile. */
+    min-width: 0;
   }
   .panel-2 {
     background: var(--panel-2);
@@ -382,7 +396,18 @@ body {
     gap: 0.75rem;
     padding: 0.85rem 1.1rem;
     border-bottom: 1px solid var(--line);
+    /* On narrow screens let the action row (segmented tabs, links) wrap
+       below the title instead of forcing the panel wider than the screen. */
+    flex-wrap: wrap;
   }
+  /* Segmented tabs can scroll horizontally within their own row if the
+     labels are wider than the viewport (e.g. translated strings). */
+  .segtab {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .segtab::-webkit-scrollbar { display: none; }
 
   /* --- Status badges --- */
   .badge {

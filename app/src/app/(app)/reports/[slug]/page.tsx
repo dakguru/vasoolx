@@ -124,14 +124,14 @@ export default function ReportDetailPage() {
             { label: t("rep.collected"), value: inr(collected), tone: "success" },
             { label: t("rep.outstanding"), value: inr(outstanding), tone: "danger" },
           ],
-          headers: [t("rep.line"), t("rep.customerOne"), t("rep.type"), "Principal", t("rep.outstanding"), t("rep.status")],
+          headers: [t("rep.line"), t("rep.customerOne"), t("rep.type"), t("rec.thPrincipal"), t("rep.outstanding"), t("rep.status")],
           rows: loans.map((l) => [
             lineName(l.lineId),
             <Link key={`cust-${l.id}`} href={`/customers/${l.customerId}`} className="text-[color:var(--brand)] font-semibold hover:underline">{custName(l.customerId)}</Link>,
             t(`line.${l.type}`),
             inr(l.principal),
             inr(loanOutstanding(data, l)),
-            <StatusBadge key={l.id} status={l.status} />,
+            <StatusBadge key={l.id} status={l.status} label={l.status === "active" ? t("common.active") : l.status === "closed" ? t("common.closed") : t("rep.badStatus")} />,
           ]),
           csv: {
             headers: ["Line", "Customer", "Type", "Principal", "Disbursed", "Paid", "Outstanding", "Status"],
@@ -166,7 +166,7 @@ export default function ReportDetailPage() {
             { label: t("nav.customers"), value: String(custs.length), tone: "ink" },
             { label: t("rep.pending"), value: inr(totalPending), tone: "danger" },
           ],
-          headers: [t("rep.customerOne"), t("rep.loansCount"), "Borrowed", t("rep.collected"), t("rep.pending")],
+          headers: [t("rep.customerOne"), t("rep.loansCount"), t("cust.borrowed"), t("rep.collected"), t("rep.pending")],
           rows: rowData.map((r) => [
             <Link key={r.c.id} href={`/customers/${r.c.id}`} className="text-[color:var(--brand)] font-semibold hover:underline">{r.c.name}</Link>,
             String(r.count),
@@ -187,22 +187,22 @@ export default function ReportDetailPage() {
         data.loans
           .filter((l) => inLine(l.lineId, lineId) && inRange(l.startDate, from, to))
           .forEach((l) =>
-            entries.push({ date: l.startDate, entry: "Loan disbursed", who: custName(l.customerId), debit: l.disbursed, credit: 0 })
+            entries.push({ date: l.startDate, entry: t("rep.loanDisbursed"), who: custName(l.customerId), debit: l.disbursed, credit: 0 })
           );
         data.payments
           .filter((p) => inLine(p.lineId, lineId) && inRange(p.date, from, to))
           .forEach((p) =>
-            entries.push({ date: p.date, entry: "Payment", who: custName(p.customerId), debit: 0, credit: p.amount })
+            entries.push({ date: p.date, entry: t("rep.payment"), who: custName(p.customerId), debit: 0, credit: p.amount })
           );
         data.investments
           .filter((i) => inLine(i.lineId, lineId) && inRange(i.date, from, to))
           .forEach((i) =>
-            entries.push({ date: i.date, entry: `Investment: ${i.type}`, who: "—", debit: 0, credit: i.amount })
+            entries.push({ date: i.date, entry: t("rep.investmentEntry", { type: i.type }), who: "—", debit: 0, credit: i.amount })
           );
         data.expenses
           .filter((e) => inLine(e.lineId, lineId) && inRange(e.date, from, to))
           .forEach((e) =>
-            entries.push({ date: e.date, entry: `Expense: ${e.type}`, who: "—", debit: e.amount, credit: 0 })
+            entries.push({ date: e.date, entry: t("rep.expenseEntry", { type: e.type }), who: "—", debit: e.amount, credit: 0 })
           );
         entries.sort((a, b) => +new Date(b.date) - +new Date(a.date));
         const debit = entries.reduce((s, e) => s + e.debit, 0);
@@ -211,7 +211,7 @@ export default function ReportDetailPage() {
           tiles: [
             { label: t("rep.debit"), value: inr(debit), tone: "danger" },
             { label: t("rep.credit"), value: inr(credit), tone: "success" },
-            { label: "Net", value: inr(credit - debit), tone: "ink" },
+            { label: t("rep.net"), value: inr(credit - debit), tone: "ink" },
           ],
           headers: [t("rep.date"), t("rep.entry"), t("rep.customerOne"), t("rep.debit"), t("rep.credit")],
           rows: entries.map((e, i) => [
@@ -245,7 +245,7 @@ export default function ReportDetailPage() {
             { label: t("rep.collected"), value: inr(collected), tone: "success" },
             { label: t("rep.outstanding"), value: inr(outstanding), tone: "danger" },
             { label: t("rep.expensesTotal"), value: inr(expenses), tone: "danger" },
-            { label: "Cash in hand", value: inr(cashInHand), tone: "ink" },
+            { label: t("rep.cashInHand"), value: inr(cashInHand), tone: "ink" },
             { label: t("rep.profit"), value: inr(expectedProfit), tone: "success" },
           ],
           headers: [t("rep.summary"), t("rep.amount")],
@@ -255,7 +255,7 @@ export default function ReportDetailPage() {
             [t("rep.collected"), inr(collected)],
             [t("rep.outstanding"), inr(outstanding)],
             [t("rep.expensesTotal"), inr(expenses)],
-            ["Cash in hand", inr(cashInHand)],
+            [t("rep.cashInHand"), inr(cashInHand)],
             [t("rep.profit"), inr(expectedProfit)],
           ],
           csv: {
@@ -330,12 +330,11 @@ export default function ReportDetailPage() {
   );
 }
 
-function StatusBadge({ status }: { status: "active" | "closed" | "bad" }) {
-  const map = {
-    active: { label: "Active", cls: "bg-[color:var(--color-success)]/12 text-[color:var(--color-success)]" },
-    closed: { label: "Closed", cls: "bg-[color:var(--text-faint)]/15 text-[color:var(--text-soft)]" },
-    bad: { label: "Bad", cls: "bg-[color:var(--color-danger)]/12 text-[color:var(--color-danger)]" },
-  };
-  const s = map[status];
-  return <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${s.cls}`}>{s.label}</span>;
+function StatusBadge({ status, label }: { status: "active" | "closed" | "bad"; label: string }) {
+  const cls = {
+    active: "bg-[color:var(--color-success)]/12 text-[color:var(--color-success)]",
+    closed: "bg-[color:var(--text-faint)]/15 text-[color:var(--text-soft)]",
+    bad: "bg-[color:var(--color-danger)]/12 text-[color:var(--color-danger)]",
+  }[status];
+  return <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${cls}`}>{label}</span>;
 }

@@ -28,11 +28,11 @@ export function BottomNav() {
               <Link
                 key={href}
                 href={href}
-                className="flex-1 flex flex-col items-center gap-1 py-1.5 rounded-2xl"
+                className="flex-1 min-w-0 flex flex-col items-center gap-1 py-1.5 rounded-2xl"
               >
                 <span
                   className={cx(
-                    "grid place-items-center w-10 h-9 rounded-2xl transition",
+                    "grid place-items-center w-10 h-9 rounded-2xl transition shrink-0",
                     active
                       ? "bg-[color:var(--brand)]/15 text-[color:var(--brand)]"
                       : "text-[color:var(--text-faint)]"
@@ -42,7 +42,7 @@ export function BottomNav() {
                 </span>
                 <span
                   className={cx(
-                    "text-[11px] font-medium",
+                    "text-[10px] leading-tight font-medium max-w-full truncate px-0.5",
                     active
                       ? "text-[color:var(--brand)]"
                       : "text-[color:var(--text-faint)]"

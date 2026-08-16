@@ -64,8 +64,8 @@ export function TopBar() {
                   <Layers size={20} />
                 </span>
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand)]">Consolidated</div>
-                  <div className="text-lg font-bold text-[color:var(--text)]">All Lines</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand)]">{t("sb.consolidated")}</div>
+                  <div className="text-lg font-bold text-[color:var(--text)]">{t("sb.allLines")}</div>
                 </div>
               </div>
               {activeLine?.id === ALL_LINES && <Check className="text-[color:var(--brand)]" />}

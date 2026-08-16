@@ -41,10 +41,10 @@ export default function SubscriptionPage() {
   ];
 
   const features = [
-    { Icon: Zap, label: "Unlimited collections & receipts" },
-    { Icon: BarChart3, label: "Advanced analytics & reports" },
-    { Icon: Users, label: "Unlimited field agents" },
-    { Icon: ShieldCheck, label: "Bank-level security & backups" },
+    { Icon: Zap, label: t("sub.featUnlimited") },
+    { Icon: BarChart3, label: t("sub.featAnalytics") },
+    { Icon: Users, label: t("sub.featAgents") },
+    { Icon: ShieldCheck, label: t("sub.featSecurity") },
   ];
 
   return (
@@ -52,8 +52,8 @@ export default function SubscriptionPage() {
       <TopBar />
       <PageHead
         title={t("set.proTitle")}
-        subtitle="Manage your VasoolX subscription"
-        actions={<Link href="/settings" className="chip"><ChevronLeft size={15} /> Settings</Link>}
+        subtitle={t("sub.manageSubtitle")}
+        actions={<Link href="/settings" className="chip"><ChevronLeft size={15} /> {t("sb.settings")}</Link>}
       />
 
       <main className="px-4 md:px-6 py-4 grid gap-4 lg:grid-cols-[1.4fr_1fr] items-start max-w-4xl">
@@ -100,7 +100,7 @@ export default function SubscriptionPage() {
         </Panel>
 
         <Panel>
-          <PanelHead title="Everything in Pro" />
+          <PanelHead title={t("sub.everythingInPro")} />
           <div className="p-4 space-y-3">
             {features.map((f) => (
               <div key={f.label} className="flex items-center gap-2.5">
@@ -109,7 +109,7 @@ export default function SubscriptionPage() {
               </div>
             ))}
             <div className="mt-2 p-3 rounded-lg bg-[color:var(--brand)]/8 border border-[color:var(--brand)]/20">
-              <div className="text-[12px] font-semibold text-[color:var(--brand)]">Currently on Pro Trial</div>
+              <div className="text-[12px] font-semibold text-[color:var(--brand)]">{t("sub.currentlyOnTrial")}</div>
               <div className="text-[11.5px] text-[color:var(--text-soft)] mt-0.5">{t("set.daysLeftInTrial", { n: 29 })}</div>
             </div>
           </div>

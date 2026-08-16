@@ -24,12 +24,12 @@ export default function AreasPage() {
     <>
       <TopBar />
       <PageHead
-        title="Collection Routes & Areas"
-        subtitle={`${activeLine?.name ?? ""} · ${areas.length} areas`}
+        title={t("area.title")}
+        subtitle={`${activeLine?.name ?? ""} · ${t("area.subtitle", { n: areas.length })}`}
         actions={
           areas.length > 0 ? (
             <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={() => setSheet(true)}>
-              <Plus size={15} /> Add Area
+              <Plus size={15} /> {t("area.addAreaBtn")}
             </button>
           ) : undefined
         }
@@ -44,20 +44,20 @@ export default function AreasPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-              <StatTile label="Collection Areas" value={String(areas.length)} icon={<Route size={16} />} color="var(--brand)" />
-              <StatTile label="Total Customers" value={String(totalCustomers)} icon={<Users size={16} />} color="var(--ok)" />
-              <StatTile label="Avg per Area" value={String(Math.round(totalCustomers / areas.length))} icon={<MapPin size={16} />} color="#7c6bf0" />
+              <StatTile label={t("cust.collectionAreas")} value={String(areas.length)} icon={<Route size={16} />} color="var(--brand)" />
+              <StatTile label={t("cust.totalCustomers")} value={String(totalCustomers)} icon={<Users size={16} />} color="var(--ok)" />
+              <StatTile label={t("area.avgPerArea")} value={String(Math.round(totalCustomers / areas.length))} icon={<MapPin size={16} />} color="#7c6bf0" />
             </div>
 
             <Panel className="overflow-hidden">
               <Toolbar>
-                <span className="text-[13px] font-bold text-[color:var(--text)]">Area Directory</span>
-                <span className="ml-auto text-[12px] text-[color:var(--text-faint)]">{areas.length} areas</span>
+                <span className="text-[13px] font-bold text-[color:var(--text)]">{t("area.directory")}</span>
+                <span className="ml-auto text-[12px] text-[color:var(--text-faint)]">{t("area.subtitle", { n: areas.length })}</span>
               </Toolbar>
               <div className="overflow-x-auto">
                 <table className="dt">
                   <thead>
-                    <tr><th>Area</th><th className="text-right">Customers</th><th>Coverage</th><th></th></tr>
+                    <tr><th>{t("dash.area")}</th><th className="text-right">{t("fld.thCustomers")}</th><th>{t("area.coverage")}</th><th></th></tr>
                   </thead>
                   <tbody>
                     {areas.map((a) => {
@@ -75,7 +75,7 @@ export default function AreasPage() {
                             <div className="w-40"><ProgressBar value={n / maxCust} /></div>
                           </td>
                           <td>
-                            <button onClick={() => { if (confirm(`Delete area "${a.name}"?`)) deleteArea(a.id); }}
+                            <button onClick={() => { if (confirm(t("area.deleteConfirm", { name: a.name }))) deleteArea(a.id); }}
                               className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)] ml-auto" aria-label="Delete">
                               <Trash2 size={14} />
                             </button>

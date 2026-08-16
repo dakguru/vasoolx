@@ -35,9 +35,9 @@ import { inr, inrCompact, fmtDate, fromDateInput, toDateInput, sameDay } from "@
 import type { Customer, Loan, PaymentMethod } from "@/lib/data/types";
 
 const MODTABS = [
-  { key: "collect", label: "Collect", href: "/collect", Icon: Gauge },
-  { key: "schedule", label: "Schedule", href: "/collect?tab=schedule", Icon: CalendarRange },
-  { key: "verify", label: "Verification", href: "/collect?tab=verify", Icon: BadgeCheck },
+  { key: "collect", labelKey: "col.collect", href: "/collect", Icon: Gauge },
+  { key: "schedule", labelKey: "col.tabSchedule", href: "/collect?tab=schedule", Icon: CalendarRange },
+  { key: "verify", labelKey: "col.tabVerify", href: "/collect?tab=verify", Icon: BadgeCheck },
 ] as const;
 
 export default function CollectPage() {
@@ -153,13 +153,13 @@ function CollectInner() {
     <>
       <TopBar />
       <PageHead
-        title="Collections"
+        title={t("col.title")}
         subtitle={`${activeLine?.name ?? ""} · ${fmtDate(dateIso)}`}
         actions={
           <>
-            <Link href="/dashboard" className="chip"><ChevronLeft size={15} /> Dashboard</Link>
+            <Link href="/dashboard" className="chip"><ChevronLeft size={15} /> {t("sb.dashboard")}</Link>
             {topTab === "collect" && (
-              <button className="chip" onClick={fillDues}><Calculator size={15} /> Fill All Dues</button>
+              <button className="chip" onClick={fillDues}><Calculator size={15} /> {t("col.fillAllDues")}</button>
             )}
           </>
         }
@@ -168,7 +168,7 @@ function CollectInner() {
       <main className="px-4 md:px-6 py-4 pb-32 space-y-4">
         <div className="segtab w-fit flex-wrap">
           {MODTABS.map((m) => (
-            <button key={m.key} data-active={view === m.key} onClick={() => router.replace(m.href)}>{m.label}</button>
+            <button key={m.key} data-active={view === m.key} onClick={() => router.replace(m.href)}>{t(m.labelKey)}</button>
           ))}
         </div>
 
@@ -219,9 +219,9 @@ function CollectInner() {
                     <thead>
                       <tr>
                         <th className="w-10">{t("col.no")}</th>
-                        <th>{t("nav.customers")}</th>
-                        <th>Area</th>
-                        <th className="text-right">Outstanding</th>
+                        <th>{t("dash.customer")}</th>
+                        <th>{t("dash.area")}</th>
+                        <th className="text-right">{t("dash.outstanding")}</th>
                         <th className="text-right">{t("col.due")}</th>
                         <th className="text-right w-44">{t("col.payToday")}</th>
                       </tr>
@@ -279,7 +279,7 @@ function CollectInner() {
                         <div className="flex-1 min-w-0">
                           <div className="font-bold text-[color:var(--text)] truncate text-[13.5px]">{c.name}</div>
                           <div className="text-[12px] text-[color:var(--text-soft)]">
-                            {loan ? `Active · ${inr(loanOutstanding(data, loan))}` : t("cust.noLoan")}
+                            {loan ? t("col.active", { amount: inr(loanOutstanding(data, loan)) }) : t("cust.noLoan")}
                           </div>
                         </div>
                         <Plus className="text-[color:var(--brand)] shrink-0" size={18} />
@@ -304,7 +304,7 @@ function CollectInner() {
         <div className="sticky bottom-4 z-30 px-4 md:px-6 mb-4">
           <Panel className="glass-strong flex items-center gap-3 py-2.5 px-4 shadow-[var(--elev-3)]">
             <div className="flex-1">
-              <div className="text-[11px] text-[color:var(--text-soft)]">{t("col.totalEntered")} · {enteredCount} selected</div>
+              <div className="text-[11px] text-[color:var(--text-soft)]">{t("col.totalEntered")} · {t("col.selected", { n: enteredCount })}</div>
               <div className="text-[19px] font-extrabold text-[color:var(--text)] tabular">{inr(totalEntered)}</div>
             </div>
             <select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} className="field-erp h-9 px-2.5 text-[13px] appearance-none cursor-pointer">
@@ -336,20 +336,21 @@ type Row = { customer: Customer; loan: Loan; paidToday: number; outstanding: num
 /* ---------------- Collection Schedule ---------------- */
 function ScheduleView({ rows, areaNm, totalExpected }: { rows: Row[]; areaNm: (id: string | null) => string; totalExpected: number }) {
   const { data } = useStore();
+  const { t } = useI18n();
   const sorted = [...rows].sort((a, b) => areaNm(a.customer.areaId).localeCompare(areaNm(b.customer.areaId)) || a.customer.name.localeCompare(b.customer.name));
   const areas = new Set(rows.map((r) => r.customer.areaId));
   return (
     <>
       <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-        <StatTile label="Scheduled Visits" value={String(rows.length)} icon={<CalendarRange size={16} />} color="var(--brand)" />
-        <StatTile label="Expected Collection" value={inrCompact(totalExpected)} icon={<Clock size={16} />} color="var(--warn)" />
-        <StatTile label="Routes / Areas" value={String(areas.size)} icon={<ShieldCheck size={16} />} color="#7c6bf0" />
+        <StatTile label={t("col.scheduledVisits")} value={String(rows.length)} icon={<CalendarRange size={16} />} color="var(--brand)" />
+        <StatTile label={t("col.expectedCollection")} value={inrCompact(totalExpected)} icon={<Clock size={16} />} color="var(--warn)" />
+        <StatTile label={t("col.routesAreas")} value={String(areas.size)} icon={<ShieldCheck size={16} />} color="#7c6bf0" />
       </div>
       <Panel className="overflow-hidden mt-4">
-        <PanelHead title="Today's Collection Schedule" desc={`${rows.length} planned visits`} />
+        <PanelHead title={t("col.todaySchedule")} desc={t("col.plannedVisits", { n: rows.length })} />
         <div className="overflow-x-auto">
           <table className="dt">
-            <thead><tr><th>Customer</th><th>Area / Route</th><th className="text-right">Next Due</th><th className="text-right">Expected</th><th className="text-right">Outstanding</th><th>Status</th></tr></thead>
+            <thead><tr><th>{t("dash.customer")}</th><th>{t("col.areaRoute")}</th><th className="text-right">{t("col.nextDue")}</th><th className="text-right">{t("col.expected")}</th><th className="text-right">{t("dash.outstanding")}</th><th>{t("dash.thStatus")}</th></tr></thead>
             <tbody>
               {sorted.map((r) => {
                 const sched = loanSchedule(data, r.loan);
@@ -361,11 +362,11 @@ function ScheduleView({ rows, areaNm, totalExpected }: { rows: Row[]; areaNm: (i
                     <td className="text-right tabular text-[color:var(--text-soft)]">{next ? fmtDate(next.dueDate) : "—"}</td>
                     <td className="text-right tabular font-semibold">{inr(r.due)}</td>
                     <td className="text-right tabular text-[color:var(--text-soft)]">{inr(r.outstanding)}</td>
-                    <td>{r.paidToday > 0 ? <StatusBadge tone="ok">Collected</StatusBadge> : <StatusBadge tone="warn">Scheduled</StatusBadge>}</td>
+                    <td>{r.paidToday > 0 ? <StatusBadge tone="ok">{t("col.collected")}</StatusBadge> : <StatusBadge tone="warn">{t("col.scheduled")}</StatusBadge>}</td>
                   </tr>
                 );
               })}
-              {sorted.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-[color:var(--text-faint)]">No scheduled collections</td></tr>}
+              {sorted.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-[color:var(--text-faint)]">{t("col.noScheduled")}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -376,23 +377,24 @@ function ScheduleView({ rows, areaNm, totalExpected }: { rows: Row[]; areaNm: (i
 
 /* ---------------- Collection Verification ---------------- */
 function VerifyView({ paid, areaNm, verified, onToggle }: { paid: Row[]; areaNm: (id: string | null) => string; verified: Record<string, boolean>; onToggle: (id: string) => void }) {
+  const { t } = useI18n();
   const total = paid.reduce((s, r) => s + r.paidToday, 0);
   const verifiedCount = paid.filter((r) => verified[r.loan.id]).length;
   return (
     <>
       <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-        <StatTile label="Collected Today" value={inrCompact(total)} icon={<BadgeCheck size={16} />} color="var(--ok)" />
-        <StatTile label="Verified" value={`${verifiedCount} / ${paid.length}`} icon={<ShieldCheck size={16} />} color="var(--brand)" />
-        <StatTile label="Awaiting Review" value={String(paid.length - verifiedCount)} icon={<Clock size={16} />} color="var(--warn)" />
+        <StatTile label={t("col.collectedToday")} value={inrCompact(total)} icon={<BadgeCheck size={16} />} color="var(--ok)" />
+        <StatTile label={t("cust.verified")} value={`${verifiedCount} / ${paid.length}`} icon={<ShieldCheck size={16} />} color="var(--brand)" />
+        <StatTile label={t("col.awaitingReview")} value={String(paid.length - verifiedCount)} icon={<Clock size={16} />} color="var(--warn)" />
       </div>
       <Panel className="overflow-hidden mt-4">
-        <PanelHead title="Collection Verification" desc="Review and approve field collections" />
+        <PanelHead title={t("col.verificationTitle")} desc={t("col.verificationDesc")} />
         {paid.length === 0 ? (
-          <EmptyState icon={<BadgeCheck size={30} />} title="Nothing to verify" desc="Collections recorded today will appear here for approval." />
+          <EmptyState icon={<BadgeCheck size={30} />} title={t("col.nothingToVerify")} desc={t("col.nothingToVerifyDesc")} />
         ) : (
           <div className="overflow-x-auto">
             <table className="dt">
-              <thead><tr><th>Customer</th><th>Area</th><th className="text-right">Amount</th><th>Status</th><th className="text-right">Action</th></tr></thead>
+              <thead><tr><th>{t("dash.customer")}</th><th>{t("dash.area")}</th><th className="text-right">{t("dash.thAmount")}</th><th>{t("dash.thStatus")}</th><th className="text-right">{t("col.action")}</th></tr></thead>
               <tbody>
                 {paid.map((r) => {
                   const ok = !!verified[r.loan.id];
@@ -401,13 +403,13 @@ function VerifyView({ paid, areaNm, verified, onToggle }: { paid: Row[]; areaNm:
                       <td><div className="flex items-center gap-2.5"><span className="w-7 h-7 rounded-full grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)] font-bold text-[11px] shrink-0">{r.customer.name.charAt(0).toUpperCase()}</span><span className="font-semibold">{r.customer.name}</span></div></td>
                       <td className="text-[color:var(--text-soft)]">{areaNm(r.customer.areaId)}</td>
                       <td className="text-right tabular font-bold text-[color:var(--ok)]">{inr(r.paidToday)}</td>
-                      <td>{ok ? <StatusBadge tone="ok"><ShieldCheck size={11} /> Verified</StatusBadge> : <StatusBadge tone="warn">Pending</StatusBadge>}</td>
+                      <td>{ok ? <StatusBadge tone="ok"><ShieldCheck size={11} /> {t("cust.verified")}</StatusBadge> : <StatusBadge tone="warn">{t("cust.pending")}</StatusBadge>}</td>
                       <td>
                         <div className="flex gap-1.5 justify-end">
                           <button onClick={() => onToggle(r.loan.id)} className={`h-7 px-2.5 rounded-md text-[11.5px] font-semibold inline-flex items-center gap-1 ${ok ? "chip" : "btn-primary"}`}>
-                            <Check size={13} /> {ok ? "Undo" : "Verify"}
+                            <Check size={13} /> {ok ? t("col.undo") : t("col.verify")}
                           </button>
-                          <button className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]" title="Flag"><Flag size={13} /></button>
+                          <button className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)]" title={t("col.flag")}><Flag size={13} /></button>
                         </div>
                       </td>
                     </tr>

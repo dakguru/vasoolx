@@ -53,12 +53,12 @@ function Inner() {
   ];
 
   const datasets = [
-    { Icon: UsersRound, name: "Customer Master", count: `${data.customers.length} records`, color: "var(--brand)" },
-    { Icon: HandCoins, name: "Collections", count: `${data.payments.length} records`, color: "var(--ok)" },
-    { Icon: Wallet, name: "Outstanding & Receivables", count: `${data.loans.filter((l) => l.status === "active").length} loans`, color: "var(--warn)" },
-    { Icon: FileText, name: "Receipts", count: `${data.payments.length} receipts`, color: "#7c6bf0" },
-    { Icon: Trophy, name: "Agent Performance", count: `${data.members.length || 1} agents`, color: "var(--brand)" },
-    { Icon: BookOpen, name: "General Ledger", count: `${data.investments.length + data.expenses.length} entries`, color: "var(--crit)" },
+    { Icon: UsersRound, key: "customer", name: t("rep.dsCustomerMaster"), count: t("rep.nRecords", { n: data.customers.length }), color: "var(--brand)" },
+    { Icon: HandCoins, key: "collections", name: t("rep.dsCollections"), count: t("rep.nRecords", { n: data.payments.length }), color: "var(--ok)" },
+    { Icon: Wallet, key: "outstanding", name: t("rep.dsOutstanding"), count: t("rep.nLoans", { n: data.loans.filter((l) => l.status === "active").length }), color: "var(--warn)" },
+    { Icon: FileText, key: "receipts", name: t("rep.dsReceipts"), count: t("rep.nReceipts", { n: data.payments.length }), color: "#7c6bf0" },
+    { Icon: Trophy, key: "agents", name: t("rep.dsAgentPerf"), count: t("rep.nAgents", { n: data.members.length || 1 }), color: "var(--brand)" },
+    { Icon: BookOpen, key: "ledger", name: t("rep.dsLedger"), count: t("rep.nEntries", { n: data.investments.length + data.expenses.length }), color: "var(--crit)" },
   ];
 
   const recentExports: { name: string; type: string; when: string }[] = [];
@@ -67,12 +67,12 @@ function Inner() {
     <>
       <TopBar />
       <PageHead
-        title={isExport ? "Export Center" : "Reports & Analytics"}
-        subtitle={isExport ? "Download your data in CSV, Excel or PDF" : "Financial, collection and performance reporting"}
+        title={isExport ? t("sb.exportCenter") : t("rep.reportsTitle")}
+        subtitle={isExport ? t("rep.exportSubtitle") : t("rep.reportsSubtitle")}
         actions={
           <div className="segtab">
-            <button data-active={!isExport} onClick={() => router.replace("/reports")}>Reports</button>
-            <button data-active={isExport} onClick={() => router.replace("/reports?tab=export")}>Export Center</button>
+            <button data-active={!isExport} onClick={() => router.replace("/reports")}>{t("rep.reports")}</button>
+            <button data-active={isExport} onClick={() => router.replace("/reports?tab=export")}>{t("sb.exportCenter")}</button>
           </div>
         }
       />
@@ -100,8 +100,8 @@ function Inner() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-[color:var(--line)] pt-3">
                   <ExportBtn Icon={FileSpreadsheet} label="CSV" onClick={() => {
-                    if (d.name === "Customer Master") csvExport("customer-master", ["Name", "Phone", "Area"], data.customers.map((c) => [c.name, c.phone, data.areas.find((a) => a.id === c.areaId)?.name ?? ""]));
-                    else if (d.name === "Collections") csvExport("collections", ["Date", "Customer", "Amount", "Method"], data.payments.map((p) => [p.date.slice(0, 10), data.customers.find((c) => c.id === p.customerId)?.name ?? "", p.amount, p.method]));
+                    if (d.key === "customer") csvExport("customer-master", ["Name", "Phone", "Area"], data.customers.map((c) => [c.name, c.phone, data.areas.find((a) => a.id === c.areaId)?.name ?? ""]));
+                    else if (d.key === "collections") csvExport("collections", ["Date", "Customer", "Amount", "Method"], data.payments.map((p) => [p.date.slice(0, 10), data.customers.find((c) => c.id === p.customerId)?.name ?? "", p.amount, p.method]));
                   }} />
                   <ExportBtn Icon={FileType} label="Excel" />
                   <ExportBtn Icon={FileText} label="PDF" />
@@ -111,20 +111,20 @@ function Inner() {
           </div>
 
           <Panel className="overflow-hidden">
-            <PanelHead title="Recent Exports" desc="Your export history" icon={<Download size={15} />} />
+            <PanelHead title={t("rep.recentExports")} desc={t("rep.exportHistory")} icon={<Download size={15} />} />
               {recentExports.length === 0 ? (
-                <div className="px-4 py-10 text-center text-[13px] text-[color:var(--text-faint)]">No exports yet. Use the export buttons above to generate your first export.</div>
+                <div className="px-4 py-10 text-center text-[13px] text-[color:var(--text-faint)]">{t("rep.noExports")}</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="dt">
-                    <thead><tr><th>Export</th><th>Format</th><th>Generated</th><th>Status</th></tr></thead>
+                    <thead><tr><th>{t("rep.thExport")}</th><th>{t("rep.thFormat")}</th><th>{t("rep.thGenerated")}</th><th>{t("dash.thStatus")}</th></tr></thead>
                     <tbody>
                       {recentExports.map((e, i) => (
                         <tr key={i}>
                           <td className="font-semibold">{e.name}</td>
                           <td><StatusBadge tone="info" dot={false}>{e.type}</StatusBadge></td>
                           <td className="tabular text-[color:var(--text-soft)]">{fmtDate(e.when)}</td>
-                          <td><StatusBadge tone="ok">Ready</StatusBadge></td>
+                          <td><StatusBadge tone="ok">{t("rep.ready")}</StatusBadge></td>
                         </tr>
                       ))}
                     </tbody>

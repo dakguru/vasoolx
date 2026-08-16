@@ -93,7 +93,7 @@ export function PaymentSheet({
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Additional details..."
+            placeholder={t("common.additionalDetails")}
           />
         </div>
       </div>

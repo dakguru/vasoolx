@@ -32,11 +32,11 @@ import {
 import { inr, inrCompact, fmtDate } from "@/lib/format";
 
 const VIEWS = [
-  { key: "outstanding", label: "Outstanding", Icon: Wallet },
-  { key: "due", label: "Due Today", Icon: CalendarClock },
-  { key: "overdue", label: "Overdue", Icon: AlertTriangle },
-  { key: "aging", label: "Aging Analysis", Icon: PieChart },
-  { key: "recovery", label: "Recovery Tracking", Icon: Undo2 },
+  { key: "outstanding", labelKey: "sb.outstanding", Icon: Wallet },
+  { key: "due", labelKey: "sb.dueToday", Icon: CalendarClock },
+  { key: "overdue", labelKey: "sb.overdue", Icon: AlertTriangle },
+  { key: "aging", labelKey: "sb.agingAnalysis", Icon: PieChart },
+  { key: "recovery", labelKey: "sb.recoveryTracking", Icon: Undo2 },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
 
@@ -52,7 +52,7 @@ function Inner() {
   const params = useSearchParams();
   const router = useRouter();
   const { data, activeLine } = useStore();
-  useI18n();
+  const { t } = useI18n();
 
   const view = (VIEWS.find((v) => v.key === params.get("view"))?.key ?? "outstanding") as View;
   const lineId = activeLine?.id ?? "";
@@ -104,11 +104,11 @@ function Inner() {
   const dueTotal = dueToday(data, lineId);
 
   const agingSegs = [
-    { label: "Current", value: aging.current, color: "var(--ok)" },
-    { label: "1 – 30 Days", value: aging.d1_30, color: "var(--brand)" },
-    { label: "31 – 60 Days", value: aging.d31_60, color: "var(--warn)" },
-    { label: "61 – 90 Days", value: aging.d61_90, color: "#f97316" },
-    { label: "90+ Days", value: aging.d90p, color: "var(--crit)" },
+    { label: t("dash.agingCurrent"), value: aging.current, color: "var(--ok)" },
+    { label: t("dash.aging1_30"), value: aging.d1_30, color: "var(--brand)" },
+    { label: t("dash.aging31_60"), value: aging.d31_60, color: "var(--warn)" },
+    { label: t("dash.aging61_90"), value: aging.d61_90, color: "#f97316" },
+    { label: t("dash.aging90p"), value: aging.d90p, color: "var(--crit)" },
   ];
   const agingTotal = Math.max(1, aging.total);
 
@@ -116,26 +116,26 @@ function Inner() {
     <>
       <TopBar />
       <PageHead
-        title="Receivables"
-        subtitle={`${activeLine?.name ?? ""} · ${inr(totalOutstanding)} outstanding`}
-        actions={<button className="chip"><Download size={15} /> Export</button>}
+        title={t("sb.receivables")}
+        subtitle={`${activeLine?.name ?? ""} · ${t("rec.subtitle", { amount: inr(totalOutstanding) })}`}
+        actions={<button className="chip"><Download size={15} /> {t("common.export")}</button>}
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4">
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-          <StatTile label="Total Outstanding" value={inrCompact(totalOutstanding)} icon={<Wallet size={16} />} color="var(--brand)" />
-          <StatTile label="Due Today" value={inrCompact(dueTotal)} icon={<CalendarClock size={16} />} color="var(--warn)" />
-          <StatTile label="Overdue Accounts" value={String(overdueRows.length)} icon={<AlertTriangle size={16} />} color="var(--crit)" />
-          <StatTile label="90+ Days" value={inrCompact(aging.d90p)} icon={<PieChart size={16} />} color="#f97316" />
+          <StatTile label={t("dash.totalOutstanding")} value={inrCompact(totalOutstanding)} icon={<Wallet size={16} />} color="var(--brand)" />
+          <StatTile label={t("sb.dueToday")} value={inrCompact(dueTotal)} icon={<CalendarClock size={16} />} color="var(--warn)" />
+          <StatTile label={t("rec.overdueAccounts")} value={String(overdueRows.length)} icon={<AlertTriangle size={16} />} color="var(--crit)" />
+          <StatTile label={t("dash.aging90p")} value={inrCompact(aging.d90p)} icon={<PieChart size={16} />} color="#f97316" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[160px]">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer..." className="field-erp w-full h-9 pl-9 pr-3 text-[13px]" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("dash.searchCustomer")} className="field-erp w-full h-9 pl-9 pr-3 text-[13px]" />
           </div>
           <select value={filterAreaId} onChange={(e) => setFilterAreaId(e.target.value)} className="field-erp h-9 px-2.5 text-[13px] appearance-none cursor-pointer min-w-40">
-            <option value="">All Areas</option>
+            <option value="">{t("dash.allAreas")}</option>
             {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </div>
@@ -143,16 +143,16 @@ function Inner() {
         <div className="segtab w-fit flex-wrap">
           {VIEWS.map((v) => (
             <button key={v.key} data-active={view === v.key} onClick={() => router.replace(`/receivables?view=${v.key}`)}>
-              {v.label}
+              {t(v.labelKey)}
             </button>
           ))}
         </div>
 
         {view === "aging" ? (
           <Panel>
-            <PanelHead title="Outstanding Aging Analysis" desc="Distribution of receivables by age bucket" />
+            <PanelHead title={t("rec.agingTitle")} desc={t("rec.agingDesc")} />
             <div className="p-4 grid gap-6 md:grid-cols-[auto_1fr] items-center">
-              <SegmentDonut segments={agingSegs} centerTop={inrCompact(aging.total)} centerSub="Total Outstanding" size={180} />
+              <SegmentDonut segments={agingSegs} centerTop={inrCompact(aging.total)} centerSub={t("dash.totalOutstanding")} size={180} />
               <div className="space-y-3">
                 {agingSegs.map((s) => (
                   <div key={s.label}>
@@ -168,11 +168,11 @@ function Inner() {
           </Panel>
         ) : view === "recovery" ? (
           <Panel className="overflow-hidden">
-            <PanelHead title="Recovery Tracking" desc={`${badLoans.length} accounts under recovery`} />
+            <PanelHead title={t("sb.recoveryTracking")} desc={t("rec.recoveryDesc", { n: badLoans.length })} />
             {badLoans.length === 0 ? (
-              <Empty label="No accounts under recovery. All loans are healthy." />
+              <Empty label={t("rec.noRecovery")} />
             ) : (
-              <TableWrap headers={["Customer", "Area", "Total Due", "Recovered", "Balance", "Recovery"]}>
+              <TableWrap headers={[t("dash.customer"), t("dash.area"), t("rec.thTotalDue"), t("rec.thRecovered"), t("rec.thBalance"), t("rec.thRecovery")]}>
                 {badLoans.map((l) => {
                   const paid = loanPaid(data, l.id);
                   const total = loanTotalDue(l);
@@ -195,21 +195,21 @@ function Inner() {
         ) : (
           <Panel className="overflow-hidden">
             <PanelHead
-              title={VIEWS.find((v) => v.key === view)!.label}
+              title={t(VIEWS.find((v) => v.key === view)!.labelKey)}
               desc={
-                view === "outstanding" ? `${outstandingRows.length} active accounts with balance`
-                : view === "due" ? `${dueRows.length} installments due`
-                : `${overdueRows.length} overdue accounts`
+                view === "outstanding" ? t("rec.outstandingDesc", { n: outstandingRows.length })
+                : view === "due" ? t("rec.dueDesc", { n: dueRows.length })
+                : t("rec.overdueDesc", { n: overdueRows.length })
               }
             />
             {(view === "outstanding" ? outstandingRows : view === "due" ? dueRows : overdueRows).length === 0 ? (
-              <Empty label="Nothing to show here." />
+              <Empty label={t("rec.nothingToShow")} />
             ) : (
               <TableWrap
                 headers={
-                  view === "outstanding" ? ["Customer", "Area", "Principal", "Paid", "Outstanding", "Progress"]
-                  : view === "due" ? ["Customer", "Area", "Due Date", "Installment", "Action"]
-                  : ["Customer", "Area", "Outstanding", "Days Overdue", "Status"]
+                  view === "outstanding" ? [t("dash.customer"), t("dash.area"), t("rec.thPrincipal"), t("cust.thPaid"), t("dash.outstanding"), t("rec.thProgress")]
+                  : view === "due" ? [t("dash.customer"), t("dash.area"), t("rec.thDueDate"), t("rec.thInstallment"), t("col.action")]
+                  : [t("dash.customer"), t("dash.area"), t("dash.outstanding"), t("rec.thDaysOverdue"), t("dash.thStatus")]
                 }
               >
                 {view === "outstanding" && outstandingRows.map((r) => {
@@ -231,7 +231,7 @@ function Inner() {
                     <td className="text-[color:var(--text-soft)]">{r.area}</td>
                     <td className="tabular text-[color:var(--text-soft)]">{r.dueDate ? fmtDate(r.dueDate) : "—"}</td>
                     <td className="text-right tabular font-bold">{inr(r.due)}</td>
-                    <td><Link href={`/collect?mode=instant`} className="badge badge-info">Collect</Link></td>
+                    <td><Link href={`/collect?mode=instant`} className="badge badge-info">{t("col.collect")}</Link></td>
                   </tr>
                 ))}
                 {view === "overdue" && overdueRows.map((r) => (
@@ -239,8 +239,8 @@ function Inner() {
                     <NameCell name={r.name} />
                     <td className="text-[color:var(--text-soft)]">{r.area}</td>
                     <td className="text-right tabular font-bold text-[color:var(--crit)]">{inr(r.outstanding)}</td>
-                    <td className="text-right tabular">{r.ageDays} days</td>
-                    <td><StatusBadge tone={r.ageDays > 60 ? "crit" : "warn"}>{r.ageDays > 60 ? "Critical" : "Overdue"}</StatusBadge></td>
+                    <td className="text-right tabular">{t("rec.daysOverdue", { n: r.ageDays })}</td>
+                    <td><StatusBadge tone={r.ageDays > 60 ? "crit" : "warn"}>{r.ageDays > 60 ? t("rec.critical") : t("common.overdue")}</StatusBadge></td>
                   </tr>
                 ))}
               </TableWrap>

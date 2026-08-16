@@ -72,7 +72,7 @@ import { inr, inrCompact, toDateInput, fmtDate } from "@/lib/format";
 type Range = "7d" | "30d" | "month" | "custom";
 
 export default function DashboardPage() {
-  useI18n();
+  const { t } = useI18n();
   const { data, activeLine } = useStore();
   const router = useRouter();
 
@@ -127,18 +127,18 @@ export default function DashboardPage() {
   // ---- KPI cards ----
   const KPIS = (
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-      <Kpi kind="collected" onOpen={setKpiKind} label="Collected Today" value={inr(collected)}
-        icon={<IndianRupee size={17} />} color="var(--ok)" trend={collectedTrend} trendNote="vs yesterday" spark={spark} />
-      <Kpi kind="outstanding" onOpen={setKpiKind} label="Outstanding" value={inrCompact(stats.outstanding)}
-        icon={<Wallet size={17} />} color="var(--brand)" trend={outstandingTrend} trendInvert trendNote="vs yesterday" spark={spark} />
-      <Kpi kind="active" onOpen={setKpiKind} label="Active Loans" value={String(stats.activeLoans)}
-        icon={<Landmark size={17} />} color="#7c6bf0" foot={`${closedLoans} closed · ${stats.totalCustomers} customers`} />
-      <Kpi kind={null} label="Today's Target" value={inrCompact(target)}
-        icon={<Target size={17} />} color="var(--warn)" ring={achievement} ringNote={`${Math.round(achievement * 100)}% achieved`} />
-      <Kpi kind="overdue" onOpen={setKpiKind} label="Overdue" value={String(stats.overdue)}
-        icon={<AlertTriangle size={17} />} color="var(--crit)" foot={stats.overdue > 0 ? "Requires attention" : "All accounts current"} />
-      <Kpi kind={null} label="Collection Rate" value={`${(rate * 100).toFixed(1)}%`}
-        icon={<TrendingUp size={17} />} color="var(--ok)" trend={rateTrend} trendNote="vs yesterday" spark={spark} />
+      <Kpi kind="collected" onOpen={setKpiKind} label={t("dash.collectedToday")} value={inr(collected)}
+        icon={<IndianRupee size={17} />} color="var(--ok)" trend={collectedTrend} trendNote={t("dash.vsYesterday")} spark={spark} />
+      <Kpi kind="outstanding" onOpen={setKpiKind} label={t("dash.outstanding")} value={inrCompact(stats.outstanding)}
+        icon={<Wallet size={17} />} color="var(--brand)" trend={outstandingTrend} trendInvert trendNote={t("dash.vsYesterday")} spark={spark} />
+      <Kpi kind="active" onOpen={setKpiKind} label={t("dash.activeLoans")} value={String(stats.activeLoans)}
+        icon={<Landmark size={17} />} color="#7c6bf0" foot={t("dash.closedCustomers", { closed: closedLoans, customers: stats.totalCustomers })} />
+      <Kpi kind={null} label={t("dash.todaysTarget")} value={inrCompact(target)}
+        icon={<Target size={17} />} color="var(--warn)" ring={achievement} ringNote={t("dash.achieved", { pct: Math.round(achievement * 100) })} />
+      <Kpi kind="overdue" onOpen={setKpiKind} label={t("dash.overdue")} value={String(stats.overdue)}
+        icon={<AlertTriangle size={17} />} color="var(--crit)" foot={stats.overdue > 0 ? t("dash.requiresAttention") : t("dash.allCurrent")} />
+      <Kpi kind={null} label={t("dash.collectionRate")} value={`${(rate * 100).toFixed(1)}%`}
+        icon={<TrendingUp size={17} />} color="var(--ok)" trend={rateTrend} trendNote={t("dash.vsYesterday")} spark={spark} />
     </div>
   );
 
@@ -149,24 +149,24 @@ export default function DashboardPage() {
 
   // ---- Aging segments ----
   const agingSegs = [
-    { label: "Current", value: aging.current, color: "var(--ok)" },
-    { label: "1 – 30 Days", value: aging.d1_30, color: "var(--brand)" },
-    { label: "31 – 60 Days", value: aging.d31_60, color: "var(--warn)" },
-    { label: "61 – 90 Days", value: aging.d61_90, color: "#f97316" },
-    { label: "90+ Days", value: aging.d90p, color: "var(--crit)" },
+    { label: t("dash.agingCurrent"), value: aging.current, color: "var(--ok)" },
+    { label: t("dash.aging1_30"), value: aging.d1_30, color: "var(--brand)" },
+    { label: t("dash.aging31_60"), value: aging.d31_60, color: "var(--warn)" },
+    { label: t("dash.aging61_90"), value: aging.d61_90, color: "#f97316" },
+    { label: t("dash.aging90p"), value: aging.d90p, color: "var(--crit)" },
   ];
   const agingTotal = Math.max(1, aging.total);
 
   // ---- Quick actions ----
   const actions = [
-    { label: "Add Customer", Icon: UserPlus, color: "var(--ok)", onClick: () => setCustSheet(true) },
-    { label: "Record Collection", Icon: HandCoins, color: "var(--brand)", href: "/collect?mode=instant" },
-    { label: "Add Expense", Icon: Plus, color: "var(--crit)", onClick: () => setExpSheet(true) },
-    { label: "Create Route", Icon: Route, color: "#7c6bf0", href: "/areas" },
-    { label: "Import Data", Icon: UploadCloud, color: "var(--brand)", href: "/lines" },
-    { label: "Generate Report", Icon: FileBarChart, color: "var(--warn)", href: "/reports" },
-    { label: "Reconcile", Icon: Scale, color: "var(--ok)", href: "/finance" },
-    { label: "Export Data", Icon: Download, color: "var(--muted)", href: "/reports?tab=export" },
+    { label: t("dash.qaAddCustomer"), Icon: UserPlus, color: "var(--ok)", onClick: () => setCustSheet(true) },
+    { label: t("dash.qaRecordCollection"), Icon: HandCoins, color: "var(--brand)", href: "/collect?mode=instant" },
+    { label: t("dash.qaAddExpense"), Icon: Plus, color: "var(--crit)", onClick: () => setExpSheet(true) },
+    { label: t("dash.qaCreateRoute"), Icon: Route, color: "#7c6bf0", href: "/areas" },
+    { label: t("dash.qaImportData"), Icon: UploadCloud, color: "var(--brand)", href: "/lines" },
+    { label: t("dash.qaGenerateReport"), Icon: FileBarChart, color: "var(--warn)", href: "/reports" },
+    { label: t("dash.qaReconcile"), Icon: Scale, color: "var(--ok)", href: "/finance" },
+    { label: t("dash.qaExportData"), Icon: Download, color: "var(--muted)", href: "/reports?tab=export" },
   ];
 
   const alertTimes = ["10m ago", "35m ago", "1h ago", "2h ago", "3h ago", "5h ago"];
@@ -188,12 +188,12 @@ export default function DashboardPage() {
         {/* Page toolbar */}
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-[24px] font-extrabold text-[color:var(--text)] tracking-tight leading-none">Dashboard</h1>
+            <h1 className="text-[24px] font-extrabold text-[color:var(--text)] tracking-tight leading-none">{t("dash.title")}</h1>
             <p className="text-[13px] text-[color:var(--text-soft)] mt-1.5">
-              Overview of your collection operations and performance
+              {t("dash.subtitle")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="chip">
               <CalendarDays size={15} />
               <input
@@ -204,10 +204,10 @@ export default function DashboardPage() {
               />
             </label>
             <button className="chip">
-              <SlidersHorizontal size={15} /> Filters
+              <SlidersHorizontal size={15} /> {t("dash.filters")}
             </button>
             <button className="btn-primary h-[34px] px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5">
-              <Wand2 size={15} /> Customize
+              <Wand2 size={15} /> {t("dash.customize")}
             </button>
           </div>
         </div>
@@ -219,12 +219,12 @@ export default function DashboardPage() {
         <div className="grid gap-4 xl:grid-cols-12 items-stretch">
           <Panel className="xl:col-span-8 flex flex-col">
             <PanelHead
-              title="Collection Performance"
-              desc={`${inr(rangeSum)} collected vs ${inr(rangeTargetSum)} target`}
+              title={t("dash.collectionPerformance")}
+              desc={t("dash.collectedVsTarget", { collected: inr(rangeSum), target: inr(rangeTargetSum) })}
               action={
                 <div className="flex items-center gap-3">
                   <div className="segtab">
-                    {([["7d", "7D"], ["30d", "30D"], ["month", "This Month"], ["custom", "Custom"]] as [Range, string][]).map(
+                    {([["7d", t("dash.range7d")], ["30d", t("dash.range30d")], ["month", t("dash.rangeMonth")], ["custom", t("dash.rangeCustom")]] as [Range, string][]).map(
                       ([v, lbl]) => (
                         <button key={v} data-active={range === v} onClick={() => setRange(v)}>
                           {lbl}
@@ -233,16 +233,16 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <Link href="/reports/loan-summary" className="text-[12px] font-semibold text-[color:var(--brand)] hidden lg:inline-flex items-center gap-0.5">
-                    View Report <ChevronRight size={13} />
+                    {t("dash.viewReport")} <ChevronRight size={13} />
                   </Link>
                 </div>
               }
             />
             <div className="p-4 flex-1">
               <div className="flex items-center gap-4 mb-2 text-[11.5px] font-medium">
-                <Legend color="var(--brand)" label="Actual Collection" />
-                <Legend color="var(--text-faint)" label="Collection Target" dashed />
-                <Legend color="var(--ok)" label="Variance" square />
+                <Legend color="var(--brand)" label={t("dash.legendActual")} />
+                <Legend color="var(--text-faint)" label={t("dash.legendTarget")} dashed />
+                <Legend color="var(--ok)" label={t("dash.legendVariance")} square />
               </div>
               <PerformanceChart data={perf} height={248} />
             </div>
@@ -250,40 +250,40 @@ export default function DashboardPage() {
 
           {/* Collection Workspace */}
           <Panel className="xl:col-span-4 flex flex-col">
-            <PanelHead title="Collection Workspace" icon={<Zap size={15} />} desc="Record a collection in seconds" />
+            <PanelHead title={t("dash.workspace")} icon={<Zap size={15} />} desc={t("dash.workspaceDesc")} />
             <div className="p-4 space-y-3 flex-1 flex flex-col">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Date">
+                <Field label={t("dash.date")}>
                   <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="field-erp w-full h-9 px-2.5 text-[13px]" />
                 </Field>
-                <Field label="Area">
+                <Field label={t("dash.area")}>
                   <select value={areaId} onChange={(e) => setAreaId(e.target.value)} className="field-erp w-full h-9 px-2.5 text-[13px] appearance-none cursor-pointer">
-                    <option value="">All Areas</option>
+                    <option value="">{t("dash.allAreas")}</option>
                     {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
                 </Field>
-                <Field label="Agent">
+                <Field label={t("dash.agent")}>
                   <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className="field-erp w-full h-9 px-2.5 text-[13px] appearance-none cursor-pointer">
-                    <option value="">All Agents</option>
+                    <option value="">{t("dash.allAgents")}</option>
                     {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
                 </Field>
-                <Field label="Customer">
-                  <input value={custQuery} onChange={(e) => setCustQuery(e.target.value)} placeholder="Search customer…" className="field-erp w-full h-9 px-2.5 text-[13px]" />
+                <Field label={t("dash.customer")}>
+                  <input value={custQuery} onChange={(e) => setCustQuery(e.target.value)} placeholder={t("dash.searchCustomer")} className="field-erp w-full h-9 px-2.5 text-[13px]" />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-2.5 pt-1 mt-auto">
                 <button onClick={() => goCollect("instant")} className="btn-primary h-10 rounded-lg text-[13px] font-semibold inline-flex items-center justify-center gap-1.5">
-                  <Zap size={15} /> Instant Collect
+                  <Zap size={15} /> {t("dash.instantCollect")}
                 </button>
                 <button onClick={() => goCollect("bulk")} className="h-10 rounded-lg text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 border border-[color:var(--ok-line)] bg-[color:var(--ok-bg)] text-[color:var(--ok)] hover:brightness-105 transition">
-                  <Layers size={15} /> Bulk Collect
+                  <Layers size={15} /> {t("dash.bulkCollect")}
                 </button>
                 <button onClick={() => router.push("/collect")} className="chip h-10 justify-center">
-                  <ScanLine size={15} /> Search / Scan
+                  <ScanLine size={15} /> {t("dash.searchScan")}
                 </button>
                 <button onClick={() => router.push("/collect?mode=instant")} className="chip h-10 justify-center">
-                  <Receipt size={15} /> Record Payment
+                  <Receipt size={15} /> {t("dash.recordPayment")}
                 </button>
               </div>
             </div>
@@ -295,14 +295,14 @@ export default function DashboardPage() {
           {/* Aging */}
           <Panel className="xl:col-span-4 flex flex-col">
             <PanelHead
-              title="Outstanding Aging"
-              action={<Link href="/receivables?view=aging" className="text-[12px] font-semibold text-[color:var(--brand)]">View Report</Link>}
+              title={t("dash.outstandingAging")}
+              action={<Link href="/receivables?view=aging" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewReport")}</Link>}
             />
             <div className="p-4 flex items-center gap-4 flex-1">
               <SegmentDonut
                 segments={agingSegs}
                 centerTop={inrCompact(aging.total)}
-                centerSub="Total Outstanding"
+                centerSub={t("dash.totalOutstanding")}
               />
               <div className="flex-1 min-w-0 space-y-2">
                 {agingSegs.map((s) => (
@@ -322,17 +322,17 @@ export default function DashboardPage() {
           {/* Agents */}
           <Panel className="xl:col-span-4 flex flex-col overflow-hidden">
             <PanelHead
-              title="Top Performing Agents"
-              action={<Link href="/users" className="text-[12px] font-semibold text-[color:var(--brand)]">View All</Link>}
+              title={t("dash.topAgents")}
+              action={<Link href="/users" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewAll")}</Link>}
             />
             <div className="overflow-x-auto flex-1">
               <table className="dt">
                 <thead>
                   <tr>
-                    <th>Agent</th>
-                    <th className="text-right">Target</th>
-                    <th className="text-right">Collected</th>
-                    <th>Achievement</th>
+                    <th>{t("dash.agent")}</th>
+                    <th className="text-right">{t("dash.thTarget")}</th>
+                    <th className="text-right">{t("dash.thCollected")}</th>
+                    <th>{t("dash.thAchievement")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -364,18 +364,18 @@ export default function DashboardPage() {
           {/* Area */}
           <Panel className="xl:col-span-4 flex flex-col">
             <PanelHead
-              title="Collection by Area"
-              action={<Link href="/areas" className="text-[12px] font-semibold text-[color:var(--brand)]">View Report</Link>}
+              title={t("dash.collectionByArea")}
+              action={<Link href="/areas" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewReport")}</Link>}
             />
             <div className="p-4 flex-1">
               {byArea.some((a) => a.amount > 0) ? (
                 <BarList
-                  items={byArea.slice(0, 6).map((a) => ({ label: a.name, value: a.amount, sub: `${a.customers} cust.` }))}
+                  items={byArea.slice(0, 6).map((a) => ({ label: a.name, value: a.amount, sub: t("dash.custShort", { n: a.customers }) }))}
                   format={inrCompact}
                 />
               ) : (
                 <BarList
-                  items={byArea.slice(0, 6).map((a) => ({ label: a.name, value: a.customers, sub: "customers" }))}
+                  items={byArea.slice(0, 6).map((a) => ({ label: a.name, value: a.customers, sub: t("dash.customersLower") }))}
                   format={(n) => String(n)}
                 />
               )}
@@ -387,22 +387,22 @@ export default function DashboardPage() {
         <div className="grid gap-4 xl:grid-cols-12 items-stretch">
           <Panel className="xl:col-span-8 flex flex-col overflow-hidden">
             <PanelHead
-              title="Recent Transactions"
-              desc="Latest financial movements across the workspace"
-              action={<Link href="/finance" className="text-[12px] font-semibold text-[color:var(--brand)]">View All</Link>}
+              title={t("dash.recentTransactions")}
+              desc={t("dash.recentTransactionsDesc")}
+              action={<Link href="/finance" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewAll")}</Link>}
             />
             <div className="overflow-x-auto flex-1">
               <table className="dt">
                 <thead>
                   <tr>
-                    <th>Date & Time</th>
-                    <th>Receipt No.</th>
-                    <th>Customer</th>
-                    <th>Area</th>
-                    <th>Mode</th>
-                    <th className="text-right">Amount</th>
-                    <th className="text-right">Outstanding</th>
-                    <th>Status</th>
+                    <th>{t("dash.thDateTime")}</th>
+                    <th>{t("dash.thReceipt")}</th>
+                    <th>{t("dash.customer")}</th>
+                    <th>{t("dash.area")}</th>
+                    <th>{t("dash.thMode")}</th>
+                    <th className="text-right">{t("dash.thAmount")}</th>
+                    <th className="text-right">{t("dash.outstanding")}</th>
+                    <th>{t("dash.thStatus")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                     );
                   })}
                   {recent.length === 0 && (
-                    <tr><td colSpan={8} className="text-center text-[color:var(--text-faint)] py-8">No transactions yet</td></tr>
+                    <tr><td colSpan={8} className="text-center text-[color:var(--text-faint)] py-8">{t("dash.noTransactions")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -437,9 +437,9 @@ export default function DashboardPage() {
           {/* Alerts */}
           <Panel className="xl:col-span-4 flex flex-col">
             <PanelHead
-              title="Alerts & Notifications"
+              title={t("dash.alerts")}
               icon={<Bell size={15} />}
-              action={<Link href="/dashboard" className="text-[12px] font-semibold text-[color:var(--brand)]">View All</Link>}
+              action={<Link href="/dashboard" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewAll")}</Link>}
             />
             <div className="divide-y divide-[color:var(--line)] flex-1 overflow-y-auto">
               {alerts.length ? alerts.slice(0, 5).map((a, i) => (
@@ -459,8 +459,8 @@ export default function DashboardPage() {
               )) : (
                 <div className="flex flex-col items-center justify-center text-center py-10 px-4">
                   <ShieldCheck size={28} className="text-[color:var(--ok)] mb-2" />
-                  <div className="text-[13px] font-semibold text-[color:var(--text)]">All clear</div>
-                  <div className="text-[12px] text-[color:var(--text-faint)]">No exceptions require attention</div>
+                  <div className="text-[13px] font-semibold text-[color:var(--text)]">{t("dash.allClear")}</div>
+                  <div className="text-[12px] text-[color:var(--text-faint)]">{t("dash.noExceptions")}</div>
                 </div>
               )}
             </div>
@@ -470,7 +470,7 @@ export default function DashboardPage() {
         {/* Quick actions + System updates */}
         <div className="grid gap-4 xl:grid-cols-12 items-stretch">
           <Panel className="xl:col-span-8 flex flex-col">
-            <PanelHead title="Quick Actions" desc="Frequent enterprise commands" />
+            <PanelHead title={t("dash.quickActionsTitle")} desc={t("dash.quickActionsDesc")} />
             <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
               {actions.map((a) => {
                 const inner = (
@@ -493,8 +493,8 @@ export default function DashboardPage() {
 
           <Panel className="xl:col-span-4 flex flex-col">
             <PanelHead
-              title="System Updates"
-              action={<Link href="/subscription" className="text-[12px] font-semibold text-[color:var(--brand)]">View All</Link>}
+              title={t("dash.systemUpdates")}
+              action={<Link href="/subscription" className="text-[12px] font-semibold text-[color:var(--brand)]">{t("dash.viewAll")}</Link>}
             />
             <div className="divide-y divide-[color:var(--line)] flex-1">
               {updates.map((u, i) => (
@@ -516,11 +516,11 @@ export default function DashboardPage() {
         {/* Enterprise status strip */}
         <Panel className="px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-[12px]">
-            <StatusItem Icon={RefreshCw} label="Last Sync" value={`${syncTime} IST`} />
-            <StatusItem Icon={Building2} label="Branch" value={`${activeLine?.name ?? "—"} Branch`} />
-            <StatusItem Icon={CircleUserRound} label="User Role" value="Administrator" />
-            <StatusItem Icon={Activity} label="Data Status" value="All systems operational" ok />
-            <StatusItem Icon={ShieldCheck} label="Secure Connection" value="256-bit SSL encrypted" ok />
+            <StatusItem Icon={RefreshCw} label={t("dash.lastSync")} value={`${syncTime} IST`} />
+            <StatusItem Icon={Building2} label={t("dash.branch")} value={t("dash.branchName", { name: activeLine?.name ?? "—" })} />
+            <StatusItem Icon={CircleUserRound} label={t("dash.userRole")} value={t("dash.administrator")} />
+            <StatusItem Icon={Activity} label={t("dash.dataStatus")} value={t("dash.systemsOperational")} ok />
+            <StatusItem Icon={ShieldCheck} label={t("dash.secureConnection")} value={t("dash.sslEncrypted")} ok />
           </div>
         </Panel>
       </main>

@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { Zap, Crosshair, ShieldCheck, Bot, BadgeCheck } from "lucide-react";
-
-const TRUST = [
-  { Icon: Zap, title: "Fast", sub: "Real-time collections" },
-  { Icon: Crosshair, title: "Accurate", sub: "Error-free tracking" },
-  { Icon: ShieldCheck, title: "Secure", sub: "Bank-level security" },
-  { Icon: Bot, title: "Automated", sub: "Smart workflows" },
-  { Icon: BadgeCheck, title: "Trusted", sub: "Reliable & transparent" },
-];
+import { useI18n } from "@/lib/i18n/provider";
 
 export function SiteFooter() {
+  const { t } = useI18n();
+  const TRUST = [
+    { Icon: Zap, title: t("ft.fast"), sub: t("ft.fastSub") },
+    { Icon: Crosshair, title: t("ft.accurate"), sub: t("ft.accurateSub") },
+    { Icon: ShieldCheck, title: t("ft.secure"), sub: t("ft.secureSub") },
+    { Icon: Bot, title: t("ft.automated"), sub: t("ft.automatedSub") },
+    { Icon: BadgeCheck, title: t("ft.trusted"), sub: t("ft.trustedSub") },
+  ];
   return (
     <footer className="w-full mt-4">
       {/* Operational intelligence strip — native part of the app shell, on every page */}
@@ -23,9 +24,9 @@ export function SiteFooter() {
               <ShieldCheck size={17} />
             </span>
             <div className="leading-tight">
-              <div className="text-[13px] font-bold text-[color:var(--text)]">VasoolX Operational Intelligence</div>
+              <div className="text-[13px] font-bold text-[color:var(--text)]">{t("ft.tagline")}</div>
               <div className="text-[11.5px] text-[color:var(--text-faint)]">
-                Real-time Collections • Receivables • Field Operations • Financial Control
+                {t("ft.subtitle")}
               </div>
             </div>
           </div>
@@ -48,12 +49,12 @@ export function SiteFooter() {
 
         {/* Compact legal line */}
         <div className="border-t px-5 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-x-5 gap-y-1.5 text-[11.5px]" style={{ borderColor: "var(--line)" }}>
-          <span className="text-[color:var(--text-faint)]">© {new Date().getFullYear()} VasoolX. All Rights Reserved.</span>
+          <span className="text-[color:var(--text-faint)]">{t("ft.rights", { year: new Date().getFullYear() })}</span>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[color:var(--text-faint)]">
-            <Link href="#" className="hover:text-[color:var(--brand)] transition">Privacy Policy</Link>
-            <Link href="#" className="hover:text-[color:var(--brand)] transition">Terms of Service</Link>
-            <Link href="#" className="hover:text-[color:var(--brand)] transition">Security</Link>
-            <Link href="/subscription" className="hover:text-[color:var(--brand)] transition">System Status</Link>
+            <Link href="#" className="hover:text-[color:var(--brand)] transition">{t("set.privacyPolicy")}</Link>
+            <Link href="#" className="hover:text-[color:var(--brand)] transition">{t("set.termsOfService")}</Link>
+            <Link href="#" className="hover:text-[color:var(--brand)] transition">{t("ft.security")}</Link>
+            <Link href="/subscription" className="hover:text-[color:var(--brand)] transition">{t("ft.systemStatus")}</Link>
             <span className="text-[color:var(--text-faint)]/70">v2.4.1</span>
           </div>
         </div>

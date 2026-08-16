@@ -41,8 +41,8 @@ export default function AddUserPage() {
     <>
       <PageHead
         title={t("user.addUser")}
-        subtitle="Invite a field agent or partner to this workspace"
-        actions={<Link href="/users" className="chip"><ChevronLeft size={15} /> Users</Link>}
+        subtitle={t("user.addUserSubtitle")}
+        actions={<Link href="/users" className="chip"><ChevronLeft size={15} /> {t("sb.users")}</Link>}
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4 max-w-2xl w-full">
@@ -92,7 +92,7 @@ export default function AddUserPage() {
               <>
                 <li className="flex gap-2"><span className="text-[color:var(--brand)]">•</span>{t("user.agentPerm1")}</li>
                 <li className="flex gap-2"><span className="text-[color:var(--brand)]">•</span>{t("user.agentPerm2")}</li>
-                <li className="flex gap-2"><span className="text-[color:var(--brand)]">•</span>Can view investments and full financial reports</li>
+                <li className="flex gap-2"><span className="text-[color:var(--brand)]">•</span>{t("user.partnerPerm")}</li>
               </>
             )}
           </ul>
