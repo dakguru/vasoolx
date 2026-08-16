@@ -419,11 +419,25 @@ function inrLite(n: number): string {
   return `₹${Math.round(n)}`;
 }
 
-// Expected daily collection = sum of installment amounts across active loans.
+// Expected collection for today = sum of installment amounts that fall due today
+// across active loans, regardless of loan type (daily/weekly/monthly). Returns 0
+// when there is nothing scheduled today (e.g. an empty or brand-new workspace).
 export function collectionTarget(data: AppData, lineId: string): number {
-  return data.loans
-    .filter((l) => inLine(l.lineId, lineId) && l.status === "active" && l.type === "daily")
-    .reduce((s, l) => s + l.installmentAmount, 0) || 25000;
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  let sum = 0;
+  const active = data.loans.filter(
+    (l) => inLine(l.lineId, lineId) && l.status === "active"
+  );
+  for (const loan of active) {
+    for (const s of loanSchedule(data, loan)) {
+      const d = new Date(s.dueDate);
+      if (`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` === todayKey) {
+        sum += s.amount;
+      }
+    }
+  }
+  return sum;
 }
 
 // Collection rate = collected today / target (capped display in caller).

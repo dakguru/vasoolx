@@ -101,7 +101,7 @@ export default function DashboardPage() {
   const agents = useMemo(() => (activeLine ? agentPerformance(data, lineId) : []), [data, lineId, activeLine]);
   const recent = useMemo(() => (activeLine ? recentTransactions(data, lineId, 6) : []), [data, lineId, activeLine]);
   const alerts = useMemo(() => (activeLine ? exceptions(data, lineId) : []), [data, lineId, activeLine]);
-  const target = activeLine ? collectionTarget(data, lineId) : 25000;
+  const target = activeLine ? collectionTarget(data, lineId) : 0;
 
   if (!stats || !aging) return null;
 
