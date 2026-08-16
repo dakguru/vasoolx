@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
-import { Button, Input, Label, Select } from "@/components/ui/primitives";
+import { Button, Input, Label, Segmented, Select } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { ALL_LINES } from "@/lib/data/selectors";
@@ -23,7 +23,7 @@ export function LoanSheet({
   onCreated?: (loanId: string) => void;
 }) {
   const { t } = useI18n();
-  const { data, activeLine, addLoan, updateLoan } = useStore();
+  const { data, activeLine, addLoan, updateLoan, addPayment } = useStore();
   // A loan always belongs to the customer's own line (correct even in the
   // consolidated "All Lines" view); fall back to the active line otherwise.
   const targetLineId =
@@ -45,7 +45,12 @@ export function LoanSheet({
   const [badDays, setBadDays] = useState("15");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [calculated, setCalculated] = useState(false);
+  // "existing" lets the user onboard an old loan already in progress: they enter
+  // the past issue date and how much has been collected, and pending is derived.
+  const [mode, setMode] = useState<"new" | "existing">("new");
+  const [collected, setCollected] = useState("");
   const isEditing = !!editLoan;
+  const existing = mode === "existing";
 
   useEffect(() => {
     if (open && activeLine) {
@@ -67,6 +72,8 @@ export function LoanSheet({
         setAmount("");
         setInterest("");
         setCalculated(false);
+        setMode("new");
+        setCollected("");
       }
     }
   }, [open, activeLine, editLoan]);
@@ -83,6 +90,9 @@ export function LoanSheet({
   const totalRepay = principal + interestAmt;
   const installmentAmount = Math.ceil(totalRepay / installmentCount);
   const cashOnHand = Math.max(0, principal - processingN);
+  // Existing-loan onboarding: clamp collected to the total, derive pending.
+  const collectedSoFar = existing ? Math.max(0, Math.min(Number(collected) || 0, totalRepay)) : 0;
+  const pending = Math.max(0, totalRepay - collectedSoFar);
 
   // Auto-suggest interest from line rate when amount changes
   useEffect(() => {
@@ -126,6 +136,20 @@ export function LoanSheet({
         lineId: targetLineId ?? customer.lineId,
         status: "active",
       });
+      // For an existing loan, record what's already been collected as an
+      // opening-balance payment so outstanding reflects reality (this also
+      // auto-closes the loan if it's already fully paid).
+      if (existing && collectedSoFar > 0) {
+        addPayment({
+          loanId: loan.id,
+          customerId: customer.id,
+          lineId: loan.lineId,
+          amount: collectedSoFar,
+          date: fromDateInput(date),
+          method,
+          note: t("loan.openingBalance"),
+        });
+      }
       onClose();
       onCreated?.(loan.id);
     }
@@ -157,6 +181,17 @@ export function LoanSheet({
       </div>
 
       <div className="flex flex-col gap-4">
+        {!isEditing && (
+          <Segmented<"new" | "existing">
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: "new", label: t("loan.modeNew") },
+              { value: "existing", label: t("loan.modeExisting") },
+            ]}
+          />
+        )}
+
         <div>
           <Label>{t("line.loanType")}</Label>
           {/* Inherited from the line — shown read-only, not editable per loan. */}
@@ -166,7 +201,7 @@ export function LoanSheet({
         </div>
 
         <div>
-          <Label>{t("loan.loanDate")}</Label>
+          <Label>{t(existing ? "loan.issuedDate" : "loan.loanDate")}</Label>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
 
@@ -203,12 +238,28 @@ export function LoanSheet({
           </div>
         </div>
 
+        {existing && (
+          <div>
+            <Label>{t("loan.collectedSoFar")}</Label>
+            <MoneyInput value={collected} onChange={setCollected} />
+            <p className="mt-1 text-[12px] text-[color:var(--text-soft)]">{t("loan.existingHint")}</p>
+          </div>
+        )}
+
         {(calculated || principal > 0) && (
           <div className="rounded-2xl p-4 bg-[color:var(--brand)]/8 grid grid-cols-2 gap-y-2 text-sm">
             <span className="text-[color:var(--text-soft)]">{t("loan.totalRepayable")}</span>
             <span className="text-right font-bold text-[color:var(--brand)]">{inr(totalRepay)}</span>
             <span className="text-[color:var(--text-soft)]">{t("loan.perInstallment")} ({installmentCount})</span>
             <span className="text-right font-semibold text-[color:var(--text)]">{inr(installmentAmount)}</span>
+            {existing && (
+              <>
+                <span className="text-[color:var(--text-soft)]">{t("loan.collectedSoFar")}</span>
+                <span className="text-right font-semibold text-[color:var(--ok)]">{inr(collectedSoFar)}</span>
+                <span className="text-[color:var(--text-soft)]">{t("loan.pending")}</span>
+                <span className="text-right font-bold text-[color:var(--warn)]">{inr(pending)}</span>
+              </>
+            )}
             <span className="text-[color:var(--text-soft)]">{t("loan.cashOnHand")}</span>
             <span className="text-right font-semibold text-[color:var(--text)]">{inr(cashOnHand)}</span>
           </div>
