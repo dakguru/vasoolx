@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Bell, Check, Plus, Layers } from "lucide-react";
+import { ChevronDown, Bell, Check, Plus, Layers, Menu } from "lucide-react";
 import { useStore } from "@/lib/data/store";
 import { ALL_LINES } from "@/lib/data/selectors";
 import { useI18n } from "@/lib/i18n/provider";
@@ -17,27 +17,34 @@ export function TopBar() {
   return (
     <>
       <header className="md:hidden sticky top-0 z-30 px-4 pt-4 pb-2">
-        <div className="mx-auto max-w-lg flex items-center justify-between">
-          <button
-            onClick={() => setPickerOpen(true)}
-            className="flex items-center gap-2.5 group"
-          >
-            <LogoMark size={40} />
-            <div className="text-left">
-              <div className="flex items-center gap-1">
-                <span className="text-xl font-extrabold text-[color:var(--text)]">
+        <div className="mx-auto max-w-lg flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <button
+              onClick={() => window.dispatchEvent(new Event("vx-drawer-open"))}
+              className="w-11 h-11 -ml-1 grid place-items-center rounded-full glass-strong text-[color:var(--brand)] shrink-0"
+              aria-label={t("sb.menu")}
+            >
+              <Menu size={22} />
+            </button>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="flex items-center gap-2 group min-w-0"
+            >
+              <LogoMark size={34} />
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-lg font-extrabold text-[color:var(--text)] truncate">
                   {activeLine?.name ?? "VasoolX"}
                 </span>
                 <ChevronDown
-                  size={20}
-                  className="text-[color:var(--brand)] transition group-hover:translate-y-0.5"
+                  size={18}
+                  className="text-[color:var(--brand)] transition group-hover:translate-y-0.5 shrink-0"
                 />
               </div>
-            </div>
-          </button>
+            </button>
+          </div>
 
           <button
-            className="w-11 h-11 grid place-items-center rounded-full glass-strong text-[color:var(--brand)] relative"
+            className="w-11 h-11 grid place-items-center rounded-full glass-strong text-[color:var(--brand)] relative shrink-0"
             aria-label="Notifications"
           >
             <Bell size={20} />

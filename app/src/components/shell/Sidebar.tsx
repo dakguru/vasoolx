@@ -59,6 +59,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Building2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/provider";
@@ -226,6 +227,7 @@ function SidebarInner() {
   const [picker, setPicker] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
@@ -239,6 +241,46 @@ function SidebarInner() {
     window.addEventListener("vx-sidebar-toggle", onToggle);
     return () => window.removeEventListener("vx-sidebar-toggle", onToggle);
   }, []);
+
+  // Mobile drawer: open via the TopBar menu button (custom event).
+  useEffect(() => {
+    const open = () => setDrawerOpen(true);
+    window.addEventListener("vx-drawer-open", open);
+    return () => window.removeEventListener("vx-drawer-open", open);
+  }, []);
+
+  // Left-edge swipe-right opens the drawer; swipe-left closes it (mobile).
+  useEffect(() => {
+    let sx = 0, sy = 0, tracking = false;
+    const onStart = (e: TouchEvent) => {
+      const tt = e.touches[0];
+      sx = tt.clientX; sy = tt.clientY; tracking = true;
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (!tracking) return;
+      tracking = false;
+      const tt = e.changedTouches[0];
+      const dx = tt.clientX - sx, dy = tt.clientY - sy;
+      if (Math.abs(dx) < 55 || Math.abs(dy) > Math.abs(dx)) return; // not a horizontal swipe
+      if (dx > 0 && sx < 26 && !drawerOpen) setDrawerOpen(true);
+      else if (dx < 0 && drawerOpen) setDrawerOpen(false);
+    };
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchend", onEnd);
+    };
+  }, [drawerOpen]);
+
+  // Close the drawer on navigation and lock body scroll while it's open.
+  useEffect(() => { setDrawerOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [drawerOpen]);
 
   // Auto-expand "More Modules" when the current route lives inside one of its sections
   useEffect(() => {
@@ -304,6 +346,7 @@ function SidebarInner() {
   const railSections = SECTIONS; // rail shows all module icons
 
   return (
+    <>
     <aside
       className={cx(
         "hidden md:flex flex-col shrink-0 h-dvh sticky top-0 z-30 transition-[width] duration-200",
@@ -535,5 +578,107 @@ function SidebarInner() {
         </div>
       </Sheet>
     </aside>
+
+    {/* ---------- Mobile slide-in drawer (full navigation) ---------- */}
+    <div
+      className={cx(
+        "md:hidden fixed inset-0 z-[60] transition-opacity duration-200",
+        drawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}
+      style={{ background: "rgba(0,0,0,.45)" }}
+      onClick={() => setDrawerOpen(false)}
+      aria-hidden
+    />
+    <aside
+      className={cx(
+        "md:hidden fixed inset-y-0 left-0 z-[61] w-[286px] max-w-[85vw] flex flex-col shadow-2xl transition-transform duration-200 will-change-transform",
+        drawerOpen ? "translate-x-0" : "-translate-x-full"
+      )}
+      style={{ background: "var(--sidebar-bg)", borderRight: "1px solid var(--line)" }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("sb.menu")}
+    >
+      <div className="flex items-center justify-between h-[58px] shrink-0 pl-4 pr-2.5 border-b border-[color:var(--line)]">
+        <Link href="/dashboard" onClick={() => setDrawerOpen(false)}><Wordmark height={24} /></Link>
+        <button
+          onClick={() => setDrawerOpen(false)}
+          className="w-9 h-9 grid place-items-center rounded-lg text-[color:var(--text-faint)] hover:bg-[color:var(--brand)]/10 hover:text-[color:var(--brand)] transition"
+          aria-label={t("common.close")}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="shrink-0 px-3 py-2">
+        <button
+          onClick={() => setPicker(true)}
+          className="w-full panel-2 rounded-xl p-2.5 flex items-center gap-2.5 text-left"
+        >
+          <div className="w-9 h-9 rounded-lg grid place-items-center bg-gradient-to-br from-[color:var(--brand)] to-[color:var(--brand-strong)] text-white font-extrabold shrink-0 shadow-sm">
+            {activeLine?.name?.charAt(0) ?? "V"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] uppercase tracking-wide text-[color:var(--text-faint)] flex items-center gap-1">
+              <Building2 size={10} /> {activeLine?.id === ALL_LINES ? t("sb.consolidated") : activeLine ? t(`line.${activeLine.loanType}`) : t("sb.workspace")}
+            </div>
+            <div className="font-bold text-[color:var(--text)] truncate text-[14px] leading-tight">{activeLine?.name ?? "VasoolX"}</div>
+          </div>
+          <ChevronsUpDown size={15} className="text-[color:var(--text-faint)] shrink-0" />
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-3 flex flex-col gap-3">
+        {SECTIONS.map((s) => (
+          <div key={s.key}>
+            {s.titleKey && <div className="nav-section mb-1">{t(s.titleKey)}</div>}
+            <div className="flex flex-col gap-0.5">
+              {s.items.map((it) => {
+                const active = isActive(it.href);
+                const badge = it.badgeKey ? badges[it.badgeKey] : 0;
+                return (
+                  <Link
+                    key={it.href}
+                    href={it.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className={cx("nav-item", active && "nav-item-active")}
+                  >
+                    <it.Icon size={17} strokeWidth={active ? 2.4 : 2} className="shrink-0" />
+                    <span className="truncate flex-1">{t(it.labelKey)}</span>
+                    {badge > 0 && (
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[color:var(--crit-bg)] text-[color:var(--crit)] text-[10px] font-bold grid place-items-center border border-[color:var(--crit-line)]">
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="shrink-0 border-t border-[color:var(--line)] p-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full grid place-items-center bg-[color:var(--brand)]/14 text-[color:var(--brand)] font-bold shrink-0 text-sm">
+            {(data.profile.name || "U").charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-[color:var(--text)] truncate text-[13px] leading-tight">{data.profile.name || "User"}</div>
+            <div className="text-[11px] text-[color:var(--text-faint)] truncate flex items-center gap-1">
+              <ShieldCheck size={10} className="text-[color:var(--ok)]" /> {t("sb.administrator")}
+            </div>
+          </div>
+          <button
+            onClick={doLogout}
+            className="w-8 h-8 grid place-items-center rounded-lg text-[color:var(--crit)] hover:bg-[color:var(--crit)]/10 transition shrink-0"
+            aria-label={t("set.logout")}
+          >
+            <LogOut size={17} />
+          </button>
+        </div>
+      </div>
+    </aside>
+    </>
   );
 }
