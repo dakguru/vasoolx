@@ -25,6 +25,7 @@ import {
   areaName,
 } from "@/lib/data/selectors";
 import { inr, inrCompact, fmtDate } from "@/lib/format";
+import { csvExport } from "@/lib/report";
 
 const VIEWS = [
   { key: "active", labelKey: "sb.activeLoans", Icon: Landmark },
@@ -60,6 +61,26 @@ function Inner() {
   const outstanding = active.reduce((s, l) => s + loanOutstanding(data, l), 0);
   const collected = loans.reduce((s, l) => s + loanPaid(data, l.id), 0);
 
+  function exportCsv() {
+    const src = view === "active" ? active : loans;
+    csvExport(
+      `vasoolx-loans-${view}`,
+      ["Customer", "Area", "Type", "Principal", "Disbursed", "Paid", "Outstanding", "Installment", "Installments", "Status"],
+      src.map((l) => [
+        custName(l.customerId),
+        custArea(l.customerId),
+        l.type,
+        l.principal,
+        l.disbursed,
+        loanPaid(data, l.id),
+        loanOutstanding(data, l),
+        l.installmentAmount,
+        l.installments,
+        l.status,
+      ])
+    );
+  }
+
   // upcoming installments (next unpaid per loan), sorted by due date
   const upcoming = useMemo(() => {
     const rows = active.map((l) => {
@@ -76,7 +97,7 @@ function Inner() {
       <PageHead
         title={t("sb.loans")}
         subtitle={`${activeLine?.name ?? ""} · ${t("ln.subtitle", { n: active.length })}`}
-        actions={<button className="chip"><Download size={15} /> {t("common.export")}</button>}
+        actions={<button className="chip" onClick={exportCsv}><Download size={15} /> {t("common.export")}</button>}
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4">

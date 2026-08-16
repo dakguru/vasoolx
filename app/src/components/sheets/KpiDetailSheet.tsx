@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Sheet } from "@/components/ui/Sheet";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
-import { loanPaid, loanOutstanding, loanTotalDue } from "@/lib/data/selectors";
+import { loanPaid, loanOutstanding, loanTotalDue, inLine } from "@/lib/data/selectors";
 import { inr, fmtDate, sameDay } from "@/lib/format";
 
 export type KpiKind = "collected" | "outstanding" | "active" | "overdue" | null;
@@ -34,12 +34,12 @@ export function KpiDetailSheet({
 
     if (kind === "collected") {
       const pays = data.payments
-        .filter((p) => p.lineId === lineId && sameDay(p.date, today))
+        .filter((p) => inLine(p.lineId, lineId) && sameDay(p.date, today))
         .sort((a, b) => b.amount - a.amount);
       const total = pays.reduce((s, p) => s + p.amount, 0);
       return (
         <>
-          <SummaryBar label={t("common.total")} value={inr(total)} tone="success" count={pays.length} />
+          <SummaryBar label={t("common.total")} value={inr(total)} tone="success" countLabel={t("kpi.items", { n: pays.length })} />
           {pays.length === 0 ? (
             <Empty text={t("fin.noItemsMatch")} />
           ) : (
@@ -59,7 +59,7 @@ export function KpiDetailSheet({
 
     const loans = data.loans.filter(
       (l) =>
-        l.lineId === lineId &&
+        inLine(l.lineId, lineId) &&
         (kind === "overdue" ? l.status === "bad" : (l.status === "active" || l.status === "bad"))
     );
     const withCalc = loans
@@ -73,7 +73,7 @@ export function KpiDetailSheet({
           label={kind === "active" ? t("dash.statActiveLoans") : t("dash.statOutstanding")}
           value={kind === "active" ? String(withCalc.length) : inr(total)}
           tone={kind === "overdue" ? "danger" : "brand"}
-          count={withCalc.length}
+          countLabel={t("kpi.items", { n: withCalc.length })}
         />
         {withCalc.length === 0 ? (
           <Empty text={t("fin.noItemsMatch")} />
@@ -123,14 +123,14 @@ export function KpiDetailSheet({
           onClick={onClose}
           className="flex items-center justify-center gap-2 py-3 mt-2 rounded-2xl glass-strong text-[color:var(--brand)] font-semibold hover:brightness-105 transition"
         >
-          View Full Report →
+          {t("kpi.viewFullReport")}
         </Link>
       )}
     </Sheet>
   );
 }
 
-function SummaryBar({ label, value, tone, count }: { label: string; value: string; tone: "success" | "brand" | "danger"; count: number }) {
+function SummaryBar({ label, value, tone, countLabel }: { label: string; value: string; tone: "success" | "brand" | "danger"; countLabel: string }) {
   const toneCls = {
     success: "text-[color:var(--color-success)]",
     brand: "text-[color:var(--brand)]",
@@ -142,7 +142,7 @@ function SummaryBar({ label, value, tone, count }: { label: string; value: strin
         <div className="text-sm text-[color:var(--text-soft)]">{label}</div>
         <div className={`text-3xl font-extrabold ${toneCls}`}>{value}</div>
       </div>
-      <div className="text-sm text-[color:var(--text-faint)]">{count} items</div>
+      <div className="text-sm text-[color:var(--text-faint)]">{countLabel}</div>
     </div>
   );
 }

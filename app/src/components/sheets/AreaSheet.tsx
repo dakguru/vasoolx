@@ -5,6 +5,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Button, Input, Label } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
+import { ALL_LINES } from "@/lib/data/selectors";
 
 export function AreaSheet({
   open,
@@ -14,12 +15,16 @@ export function AreaSheet({
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const { activeLine, addArea } = useStore();
+  const { data, activeLine, addArea } = useStore();
   const [name, setName] = useState("");
 
+  // In "All Lines" mode, attach the area to a concrete line, not "all".
+  const targetLineId =
+    activeLine?.id === ALL_LINES ? data.lines[0]?.id ?? null : activeLine?.id ?? null;
+
   function save() {
-    if (!name.trim() || !activeLine) return;
-    addArea(name.trim(), activeLine.id);
+    if (!name.trim() || !targetLineId) return;
+    addArea(name.trim(), targetLineId);
     setName("");
     onClose();
   }

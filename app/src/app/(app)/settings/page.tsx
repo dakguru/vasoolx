@@ -267,7 +267,7 @@ function SettingsInner() {
           <Row
             icon={<RotateCcw size={20} />}
             label="Reset demo data"
-            onClick={resetDemo}
+            onClick={() => { if (confirm(t("set.resetConfirm"))) resetDemo(); }}
             right={<ChevronRight size={18} className="text-[color:var(--text-faint)]" />}
           />
         </SettingsCard>

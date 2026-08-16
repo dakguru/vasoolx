@@ -30,6 +30,7 @@ import {
   areaName,
 } from "@/lib/data/selectors";
 import { inr, inrCompact, fmtDate } from "@/lib/format";
+import { csvExport } from "@/lib/report";
 
 const VIEWS = [
   { key: "outstanding", labelKey: "sb.outstanding", Icon: Wallet },
@@ -103,6 +104,24 @@ function Inner() {
   const totalOutstanding = rows.reduce((s, r) => s + r.outstanding, 0);
   const dueTotal = dueToday(data, lineId);
 
+  function exportCsv() {
+    if (view === "recovery") {
+      csvExport("vasoolx-recovery", ["Customer", "Area", "Total due", "Recovered", "Balance"],
+        badLoans.map((l) => [custName(l.customerId), custArea(l.customerId), loanTotalDue(l), loanPaid(data, l.id), loanOutstanding(data, l)]));
+      return;
+    }
+    if (view === "aging") {
+      csvExport("vasoolx-aging", ["Bucket", "Amount"], [
+        ["Current", aging.current], ["1–30 days", aging.d1_30], ["31–60 days", aging.d31_60],
+        ["61–90 days", aging.d61_90], ["90+ days", aging.d90p], ["Total", aging.total],
+      ]);
+      return;
+    }
+    const src = view === "due" ? dueRows : view === "overdue" ? overdueRows : outstandingRows;
+    csvExport(`vasoolx-receivables-${view}`, ["Customer", "Area", "Principal", "Paid", "Outstanding", "Due", "Due date", "Days overdue"],
+      src.map((r) => [r.name, r.area, r.loan.principal, r.paid, r.outstanding, r.due, r.dueDate ? fmtDate(r.dueDate) : "—", r.ageDays]));
+  }
+
   const agingSegs = [
     { label: t("dash.agingCurrent"), value: aging.current, color: "var(--ok)" },
     { label: t("dash.aging1_30"), value: aging.d1_30, color: "var(--brand)" },
@@ -118,7 +137,7 @@ function Inner() {
       <PageHead
         title={t("sb.receivables")}
         subtitle={`${activeLine?.name ?? ""} · ${t("rec.subtitle", { amount: inr(totalOutstanding) })}`}
-        actions={<button className="chip"><Download size={15} /> {t("common.export")}</button>}
+        actions={<button className="chip" onClick={exportCsv}><Download size={15} /> {t("common.export")}</button>}
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4">

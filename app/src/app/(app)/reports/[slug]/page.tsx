@@ -44,7 +44,8 @@ export default function ReportDetailPage() {
   const title = t(TITLES[slug] ?? "rep.reports");
   const dated = ["loan-summary", "investment", "expense", "ledger"].includes(slug);
 
-  const report = useMemo(() => buildReport(), [slug, from, to, loanType, loanStatus, data, lineId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const report = useMemo(() => buildReport(), [slug, from, to, loanType, loanStatus, data, lineId, t]);
 
   function buildReport(): {
     tiles: { label: string; value: string; tone?: "brand" | "success" | "danger" | "ink" }[];

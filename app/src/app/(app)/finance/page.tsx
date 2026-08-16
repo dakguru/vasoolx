@@ -29,6 +29,7 @@ import { useStore } from "@/lib/data/store";
 import { inLine } from "@/lib/data/selectors";
 import { lineStats } from "@/lib/data/selectors";
 import { inr, inrCompact, fmtDate } from "@/lib/format";
+import { csvExport } from "@/lib/report";
 import type { Investment, Expense } from "@/lib/data/types";
 
 const TABS = [
@@ -78,6 +79,16 @@ function Inner() {
   const isInv = sub === "investment";
   const custName = (id: string) => data.customers.find((c) => c.id === id)?.name ?? "—";
 
+  function exportCsv() {
+    if (tab === "receipts") {
+      csvExport("vasoolx-receipts", ["Date", "Customer", "Method", "Amount"],
+        payments.map((p) => [fmtDate(p.date), custName(p.customerId), p.method, p.amount]));
+      return;
+    }
+    csvExport(`vasoolx-${sub}`, ["Date", "Type", "Method", "Amount", "Note"],
+      items.map((x) => [fmtDate(x.date), x.type, x.method, x.amount, x.note]));
+  }
+
   // cash flow
   const cashIn = payments.filter((p) => p.method === "cash").reduce((s, p) => s + p.amount, 0) + data.investments.filter((i) => inLine(i.lineId, lineId) && i.method === "cash").reduce((s, i) => s + i.amount, 0);
   const cashOut = data.expenses.filter((e) => inLine(e.lineId, lineId) && e.method === "cash").reduce((s, e) => s + e.amount, 0);
@@ -104,7 +115,7 @@ function Inner() {
         actions={
           <>
             <button className="chip" onClick={() => { setEditItem(null); setSheet(true); }}><Plus size={15} /> {t("fin.addEntry")}</button>
-            <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5"><Download size={15} /> {t("common.export")}</button>
+            <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={exportCsv}><Download size={15} /> {t("common.export")}</button>
           </>
         }
       />

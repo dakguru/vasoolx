@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
+import { ALL_LINES } from "@/lib/data/selectors";
 import type { Customer } from "@/lib/data/types";
 
 export function CustomerSheet({
@@ -26,7 +27,11 @@ export function CustomerSheet({
 }) {
   const { t } = useI18n();
   const { data, activeLine, addCustomer, updateCustomer } = useStore();
-  const areas = data.areas.filter((a) => a.lineId === activeLine?.id);
+  // In the consolidated "All Lines" view, resolve to a concrete line so new
+  // records are never orphaned with lineId "all".
+  const targetLineId =
+    activeLine?.id === ALL_LINES ? data.lines[0]?.id ?? null : activeLine?.id ?? null;
+  const areas = data.areas.filter((a) => a.lineId === targetLineId);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -46,7 +51,7 @@ export function CustomerSheet({
   }, [open, editing]);
 
   function save() {
-    if (!name.trim() || !activeLine) return;
+    if (!name.trim() || !activeLine || !targetLineId) return;
     if (editing) {
       updateCustomer(editing.id, {
         name: name.trim(),
@@ -59,7 +64,7 @@ export function CustomerSheet({
       });
     } else {
       addCustomer({
-        lineId: activeLine.id,
+        lineId: targetLineId,
         areaId: areaId || null,
         name: name.trim(),
         phone,

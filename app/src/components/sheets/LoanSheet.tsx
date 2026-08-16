@@ -5,6 +5,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Button, Input, Label, Segmented, Select } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
+import { ALL_LINES } from "@/lib/data/selectors";
 import { inr, fromDateInput, toDateInput } from "@/lib/format";
 import type { Customer, Loan, LoanType, PaymentMethod } from "@/lib/data/types";
 
@@ -22,7 +23,11 @@ export function LoanSheet({
   onCreated?: (loanId: string) => void;
 }) {
   const { t } = useI18n();
-  const { activeLine, addLoan, updateLoan } = useStore();
+  const { data, activeLine, addLoan, updateLoan } = useStore();
+  // A loan always belongs to the customer's own line (correct even in the
+  // consolidated "All Lines" view); fall back to the active line otherwise.
+  const targetLineId =
+    customer?.lineId ?? (activeLine?.id === ALL_LINES ? data.lines[0]?.id : activeLine?.id) ?? null;
 
   const [type, setType] = useState<LoanType>("daily");
   const [date, setDate] = useState(toDateInput(new Date().toISOString()));
@@ -123,7 +128,7 @@ export function LoanSheet({
       const loan = addLoan({
         ...payload,
         customerId: customer.id,
-        lineId: activeLine.id,
+        lineId: targetLineId ?? customer.lineId,
         status: "active",
       });
       onClose();
@@ -185,7 +190,7 @@ export function LoanSheet({
             <MoneyInput value={interest} onChange={setInterest} />
           </div>
           <div>
-            <Label required>{t("loan.loanPeriod")} ({t("common.days") || "Days"})</Label>
+            <Label required>{t("loan.loanPeriod")}</Label>
             <Input type="number" value={period} onChange={(e) => setPeriod(e.target.value)} />
           </div>
           <div>

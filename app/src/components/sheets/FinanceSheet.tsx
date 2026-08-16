@@ -5,6 +5,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
+import { ALL_LINES } from "@/lib/data/selectors";
 import { fromDateInput, toDateInput } from "@/lib/format";
 import type { PaymentMethod, Investment, Expense } from "@/lib/data/types";
 
@@ -23,7 +24,10 @@ export function FinanceSheet({
   editItem?: Investment | Expense | null;
 }) {
   const { t } = useI18n();
-  const { activeLine, addExpense, addInvestment, updateExpense, updateInvestment } = useStore();
+  const { data, activeLine, addExpense, addInvestment, updateExpense, updateInvestment } = useStore();
+  // Attach new finance entries to a concrete line, never the "all" sentinel.
+  const targetLineId =
+    activeLine?.id === ALL_LINES ? data.lines[0]?.id ?? null : activeLine?.id ?? null;
 
   const [type, setType] = useState("");
   const [amount, setAmount] = useState("");
@@ -54,7 +58,7 @@ export function FinanceSheet({
   }
 
   function save() {
-    if (!activeLine || !type || !amount) return;
+    if (!activeLine || !targetLineId || !type || !amount) return;
     const payload = {
       type,
       amount: Number(amount) || 0,
@@ -66,7 +70,7 @@ export function FinanceSheet({
       if (isExp) updateExpense(editItem.id, payload);
       else updateInvestment(editItem.id, payload);
     } else {
-      const createPayload = { ...payload, lineId: activeLine.id };
+      const createPayload = { ...payload, lineId: targetLineId };
       if (isExp) addExpense(createPayload);
       else addInvestment(createPayload);
     }

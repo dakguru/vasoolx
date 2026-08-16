@@ -27,6 +27,7 @@ import {
   areaName,
 } from "@/lib/data/selectors";
 import { inr, inrCompact, fmtDate } from "@/lib/format";
+import { csvExport } from "@/lib/report";
 
 const VIEWS = [
   { key: "routes", labelKey: "sb.collectionRoutes", Icon: Route },
@@ -81,6 +82,16 @@ function Inner() {
   const totalExpected = areas.reduce((s, a) => s + expectedForArea(a.id), 0);
   const collectedToday = byArea.reduce((s, a) => s + a.amount, 0);
 
+  function exportCsv() {
+    if (view === "agents") {
+      csvExport("vasoolx-agents", ["Agent", "Role", "Target", "Collected", "Achievement %", "Visits"],
+        agents.map((a) => [a.name, a.accessType, a.target, a.collected, Math.round(a.achievement * 100), a.visits]));
+      return;
+    }
+    csvExport("vasoolx-routes", ["Route / Area", "Customers", "Expected", "Collected"],
+      areas.map((a) => [a.name, custByArea(a.id).length, expectedForArea(a.id), byArea.find((b) => b.areaId === a.id)?.amount ?? 0]));
+  }
+
   // deterministic pseudo-positions for tracking map
   const markers = members.map((m, i) => ({
     id: m.id, name: m.name,
@@ -95,7 +106,7 @@ function Inner() {
       <PageHead
         title={t("sb.field")}
         subtitle={`${activeLine?.name ?? ""} · ${t("fld.subtitle", { agents: members.length, routes: areas.length })}`}
-        actions={<button className="chip"><Download size={15} /> {t("common.export")}</button>}
+        actions={<button className="chip" onClick={exportCsv}><Download size={15} /> {t("common.export")}</button>}
       />
 
       <main className="px-4 md:px-6 py-4 space-y-4">
