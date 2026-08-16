@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "vasoolx",
+      "name": "vasoolx-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "app", "run", "dev"],
+      "runtimeArgs": ["run", "dev", "--prefix", "app"],
       "port": 3000
     }
   ]
