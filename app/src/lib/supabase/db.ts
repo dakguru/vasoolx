@@ -328,6 +328,14 @@ export const db = {
 
   // Link memberships created for the signed-in user's phone (no accept step).
   claimMemberships: (sb: SB) => sb.rpc("claim_memberships"),
+
+  // Batch inserts for bulk import (call in FK order: areas → customers → loans → payments).
+  insertAreas: (sb: SB, arr: Area[]) =>
+    sb.from("areas").insert(arr.map((a) => ({ id: a.id, line_id: a.lineId, name: a.name, created_at: a.createdAt }))),
+  insertCustomers: (sb: SB, arr: Customer[]) =>
+    sb.from("customers").insert(arr.map((c) => ({ id: c.id, ...toRow(CUSTOMER_COLS, c) }))),
+  insertLoans: (sb: SB, arr: Loan[]) =>
+    sb.from("loans").insert(arr.map((l) => ({ id: l.id, ...toRow(LOAN_COLS, l) }))),
   deleteMember: (sb: SB, id: string) => sb.from("line_members").delete().eq("id", id),
 
   // profile

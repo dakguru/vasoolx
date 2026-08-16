@@ -29,6 +29,23 @@ import { loadAll, db } from "@/lib/supabase/db";
 
 const STORAGE_KEY = "vasoolx.data.v1";
 
+// One spreadsheet row for the bulk importer: a customer plus (optionally) their
+// existing loan. `amount`/`installments` drive loan creation; `collected`
+// becomes an opening-balance payment.
+export type ImportRow = {
+  name: string;
+  phone?: string;
+  area?: string;
+  address?: string;
+  amount?: number;
+  interest?: number;
+  processing?: number;
+  installments?: number;
+  issuedDate?: string;
+  collected?: number;
+  method?: Payment["method"];
+};
+
 // When Supabase is configured the app is backed by Postgres; otherwise it runs
 // as a self-contained localStorage demo.
 const SUPA = isSupabaseConfigured;
@@ -77,6 +94,8 @@ type StoreContextValue = {
   // profile
   updateProfile: (patch: Partial<Profile>) => void;
   resetDemo: () => void;
+  // bulk import (customers + existing loans)
+  importLoans: (lineId: string, rows: ImportRow[]) => Promise<{ customers: number; loans: number }>;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -622,6 +641,130 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     commit(buildSeed());
   }, [commit]);
 
+  // Bulk import customers + their existing loans into one line. Builds all
+  // entities, commits local state once, then (Supabase) inserts layer-by-layer
+  // in FK order (areas → customers → loans → payments) so nothing races.
+  const importLoans: StoreContextValue["importLoans"] = useCallback(
+    async (lineId, rows) => {
+      const d = dataRef.current;
+      const line = d.lines.find((l) => l.id === lineId);
+      if (!line) return { customers: 0, loans: 0 };
+
+      const areaByName = new Map<string, string>();
+      for (const a of d.areas.filter((a) => a.lineId === lineId)) {
+        areaByName.set(a.name.trim().toLowerCase(), a.id);
+      }
+      const newAreas: Area[] = [];
+      const resolveArea = (name?: string): string | null => {
+        const key = (name ?? "").trim().toLowerCase();
+        if (!key) return null;
+        const existing = areaByName.get(key);
+        if (existing) return existing;
+        const area: Area = { id: genId("area"), lineId, name: name!.trim(), createdAt: new Date().toISOString() };
+        newAreas.push(area);
+        areaByName.set(key, area.id);
+        return area.id;
+      };
+
+      const newCustomers: Customer[] = [];
+      const newLoans: Loan[] = [];
+      const newPayments: Payment[] = [];
+
+      for (const row of rows) {
+        const customer: Customer = {
+          id: genId("cust"),
+          lineId,
+          areaId: resolveArea(row.area),
+          name: (row.name ?? "").trim(),
+          phone: (row.phone ?? "").trim(),
+          sortOrder: 0,
+          address: (row.address ?? "").trim(),
+          notes: "",
+          photoUrl: null,
+          createdAt: new Date().toISOString(),
+        };
+        newCustomers.push(customer);
+
+        const principal = Number(row.amount) || 0;
+        const installments = Math.max(1, Math.round(Number(row.installments) || 0));
+        if (principal > 0 && installments > 0) {
+          const interest = Number(row.interest) || 0;
+          const processing = Number(row.processing) || 0;
+          const totalDue = principal + interest;
+          const collected = Math.max(0, Math.min(Number(row.collected) || 0, totalDue));
+          const startDate = row.issuedDate || new Date().toISOString();
+          const method = row.method || "cash";
+          const loan: Loan = {
+            id: genId("loan"),
+            customerId: customer.id,
+            lineId,
+            principal,
+            interest,
+            processingFees: processing,
+            disbursed: Math.max(0, principal - processing),
+            type: line.loanType,
+            installmentAmount: Math.ceil(totalDue / installments),
+            installments,
+            badLoanDays: line.badLoanDays || 15,
+            method,
+            startDate,
+            status: collected >= totalDue ? "closed" : "active",
+            createdAt: new Date().toISOString(),
+          };
+          newLoans.push(loan);
+          if (collected > 0) {
+            newPayments.push({
+              id: genId("pay"),
+              loanId: loan.id,
+              customerId: customer.id,
+              lineId,
+              amount: collected,
+              date: startDate,
+              method,
+              note: "Opening balance (imported)",
+            });
+          }
+        }
+      }
+
+      commit({
+        ...d,
+        areas: [...d.areas, ...newAreas],
+        customers: [...d.customers, ...newCustomers],
+        loans: [...d.loans, ...newLoans],
+        payments: [...d.payments, ...newPayments],
+      });
+
+      if (SUPA) {
+        const client = sb();
+        const owner = userIdRef.current!;
+        try {
+          if (newAreas.length) {
+            const r = await db.insertAreas(client, newAreas);
+            if (r.error) throw r.error;
+          }
+          if (newCustomers.length) {
+            const r = await db.insertCustomers(client, newCustomers);
+            if (r.error) throw r.error;
+          }
+          if (newLoans.length) {
+            const r = await db.insertLoans(client, newLoans);
+            if (r.error) throw r.error;
+          }
+          if (newPayments.length) {
+            const r = await db.insertPayments(client, newPayments, owner);
+            if (r.error) throw r.error;
+          }
+        } catch (e) {
+          console.error("[vasoolx import]", e);
+        }
+      }
+
+      return { customers: newCustomers.length, loans: newLoans.length };
+    },
+    [commit, genId, sb]
+  );
+
   const activeLine = useMemo(() => {
     if (data.activeLineId === ALL_LINES && data.lines.length > 0) {
       return {
@@ -671,6 +814,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     deleteMember,
     updateProfile,
     resetDemo,
+    importLoans,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

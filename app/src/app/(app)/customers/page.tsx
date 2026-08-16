@@ -8,6 +8,7 @@ import {
   MapPin,
   Phone,
   Download,
+  Upload,
   ChevronRight,
   UserPlus,
   Wallet,
@@ -37,6 +38,7 @@ import {
   DonutRing,
 } from "@/components/ui/erp";
 import { CustomerSheet } from "@/components/sheets/CustomerSheet";
+import { ImportSheet } from "@/components/sheets/ImportSheet";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { inLine } from "@/lib/data/selectors";
@@ -75,6 +77,7 @@ function Inner() {
   const [q, setQ] = useState("");
   const [areaFilter, setAreaFilter] = useState("");
   const [sheet, setSheet] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const tab = (TABS.find((x) => x.key === params.get("tab"))?.key ?? "directory") as Tab;
   const lineId = activeLine?.id ?? "";
@@ -100,12 +103,13 @@ function Inner() {
         title={t("nav.customers")}
         subtitle={`${activeLine?.name ?? ""} · ${t("cust.subtitleCount", { count: customers.length })}`}
         actions={
-          customers.length > 0 ? (
-            <>
+          <>
+            <button className="chip" onClick={() => setImportOpen(true)}><Upload size={15} /> {t("imp.button")}</button>
+            {customers.length > 0 && (
               <button className="chip" onClick={() => router.push("/reports/customer")}><Download size={15} /> {t("common.export")}</button>
-              <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={() => setSheet(true)}><Plus size={15} /> {t("cust.addCustomer")}</button>
-            </>
-          ) : undefined
+            )}
+            <button className="btn-primary h-9 px-3.5 rounded-lg text-[13px] font-semibold inline-flex items-center gap-1.5" onClick={() => setSheet(true)}><Plus size={15} /> {t("cust.addCustomer")}</button>
+          </>
         }
       />
 
@@ -181,6 +185,7 @@ function Inner() {
       </main>
 
       <CustomerSheet open={sheet} onClose={() => setSheet(false)} />
+      <ImportSheet open={importOpen} onClose={() => setImportOpen(false)} lineId={activeLine?.id} lineName={activeLine?.name} />
     </>
   );
 }
