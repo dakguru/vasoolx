@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,8 +15,6 @@ import {
   UserCog,
   Check,
   Minus,
-  Monitor,
-  Smartphone,
 } from "lucide-react";
 import { TopBar } from "@/components/shell/TopBar";
 import { Button, EmptyState } from "@/components/ui/primitives";
@@ -24,8 +22,6 @@ import { Loader } from "@/components/ui/Loader";
 import { Panel, PageHead, PanelHead, StatTile, StatusBadge } from "@/components/ui/erp";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
-import { fmtDate } from "@/lib/format";
-import { inr } from "@/lib/format";
 
 const TABS = [
   { key: "users", labelKey: "sb.users", Icon: UsersRound },
@@ -70,26 +66,6 @@ function Inner() {
     { module: t("sb.access"), admin: 2, partner: 0, agent: 0 },
     { module: t("sb.admin"), admin: 2, partner: 0, agent: 0 },
   ];
-
-  const activity = useMemo(() => {
-    const custName = new Map(data.customers.map((c) => [c.id, c.name] as const));
-    return data.payments
-      .slice()
-      .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-      .slice(0, 15)
-      .map((p) => ({ id: p.id, actor: data.profile.name || t("sb.administrator"), action: t("usr.collectedAction", { amount: inr(p.amount), name: custName.get(p.customerId) ?? t("dash.customer") }), date: p.date }));
-  }, [data]);
-
-  const logins = useMemo(() => {
-    const base = [{ id: "self", name: data.profile.name || "Administrator", role: "Administrator" }, ...data.members.map((m) => ({ id: m.id, name: m.name || m.phone, role: m.accessType }))];
-    return base.map((u, i) => ({
-      ...u,
-      device: i % 2 === 0 ? "Desktop" : "Mobile",
-      ip: `103.21.${20 + i}.${100 + i * 3}`,
-      when: new Date(Date.now() - i * 3600_000 * 5).toISOString(),
-      status: i % 4 === 3 ? "failed" : "success",
-    }));
-  }, [data]);
 
   return (
     <>
@@ -209,46 +185,28 @@ function Inner() {
         )}
 
         {tab === "activity" && (
-          <Panel className="overflow-hidden">
-            <PanelHead title={t("sb.activityLogs")} desc={t("usr.activityLogsDesc")} />
-            <div className="divide-y divide-[color:var(--line)]">
-              {activity.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className="w-8 h-8 rounded-full grid place-items-center bg-[color:var(--brand)]/12 text-[color:var(--brand)] font-bold text-[11px] shrink-0">{a.actor.charAt(0).toUpperCase()}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] text-[color:var(--text)]"><b>{a.actor}</b> · {a.action}</div>
-                  </div>
-                  <span className="text-[11px] text-[color:var(--text-faint)] tabular shrink-0">{fmtDate(a.date)}</span>
-                </div>
-              ))}
-              {activity.length === 0 && <div className="px-4 py-8 text-center text-[color:var(--text-faint)] text-[13px]">{t("usr.noActivity")}</div>}
-            </div>
-          </Panel>
+          <ComingSoon icon={<Activity size={26} />} title={t("usr.comingSoon")} desc={t("usr.activitySoon")} />
         )}
 
         {tab === "logins" && (
-          <Panel className="overflow-hidden">
-            <PanelHead title={t("sb.loginHistory")} desc={t("usr.loginHistoryDesc")} />
-            <div className="overflow-x-auto">
-              <table className="dt">
-                <thead><tr><th>{t("usr.thUser")}</th><th>{t("usr.thDevice")}</th><th>{t("usr.thIp")}</th><th>{t("usr.thWhen")}</th><th>{t("dash.thStatus")}</th></tr></thead>
-                <tbody>
-                  {logins.map((l) => (
-                    <tr key={l.id}>
-                      <td className="font-semibold">{l.name}</td>
-                      <td><span className="inline-flex items-center gap-1.5 text-[color:var(--text-soft)]">{l.device === "Desktop" ? <Monitor size={14} /> : <Smartphone size={14} />} {l.device === "Desktop" ? t("usr.desktop") : t("usr.mobile")}</span></td>
-                      <td className="tabular text-[color:var(--text-soft)]">{l.ip}</td>
-                      <td className="tabular text-[color:var(--text-soft)]">{fmtDate(l.when)}</td>
-                      <td><StatusBadge tone={l.status === "success" ? "ok" : "crit"}>{l.status === "success" ? t("usr.success") : t("usr.failed")}</StatusBadge></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
+          <ComingSoon icon={<LogIn size={26} />} title={t("usr.comingSoon")} desc={t("usr.loginsSoon")} />
         )}
       </main>
     </>
+  );
+}
+
+// Placeholder for audit features (activity log, login history) that require
+// real tracking not yet captured — shown instead of fabricated data.
+function ComingSoon({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <Panel>
+      <div className="flex flex-col items-center justify-center text-center gap-3 py-16 px-6">
+        <span className="w-14 h-14 rounded-2xl grid place-items-center bg-[color:var(--brand)]/10 text-[color:var(--brand)]">{icon}</span>
+        <div className="text-lg font-bold text-[color:var(--text)]">{title}</div>
+        <p className="text-sm text-[color:var(--text-soft)] max-w-sm">{desc}</p>
+      </div>
+    </Panel>
   );
 }
 
