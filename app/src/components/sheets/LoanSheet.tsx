@@ -47,14 +47,8 @@ export function LoanSheet({
         setDate(toDateInput(editLoan.startDate));
         setAmount(String(editLoan.principal));
         setInterest(String(editLoan.interest));
-        // Reverse-engineer the period from installments and type
-        const pDays =
-          editLoan.type === "monthly"
-            ? editLoan.installments * 30
-            : editLoan.type === "weekly"
-            ? editLoan.installments * 7
-            : editLoan.installments;
-        setPeriod(String(pDays));
+        // The period field holds the installment count directly.
+        setPeriod(String(editLoan.installments));
         setProcessing(String(editLoan.processingFees));
         setBadDays(String(editLoan.badLoanDays));
         setMethod(editLoan.method);
@@ -74,16 +68,12 @@ export function LoanSheet({
 
   const principal = Number(amount) || 0;
   const interestAmt = Number(interest) || 0;
-  const periodDays = Number(period) || 1;
   const processingN = Number(processing) || 0;
 
-  // Derive installment count from period (days) and loan type
-  const installmentCount =
-    type === "monthly"
-      ? Math.max(1, Math.round(periodDays / 30))
-      : type === "weekly"
-        ? Math.max(1, Math.round(periodDays / 7))
-        : Math.max(1, periodDays); // daily
+  // The period field is the number of installments directly. Loan type only
+  // controls the spacing between them (daily / weekly / monthly), which the
+  // repayment schedule handles — not the count.
+  const installmentCount = Math.max(1, Math.round(Number(period) || 1));
 
   const totalRepay = principal + interestAmt;
   const installmentAmount = Math.ceil(totalRepay / installmentCount);
@@ -190,7 +180,9 @@ export function LoanSheet({
             <MoneyInput value={interest} onChange={setInterest} />
           </div>
           <div>
-            <Label required>{t("loan.loanPeriod")}</Label>
+            <Label required>
+              {t(type === "daily" ? "loan.loanPeriod" : "loan.loanPeriodInst")}
+            </Label>
             <Input type="number" value={period} onChange={(e) => setPeriod(e.target.value)} />
           </div>
           <div>
