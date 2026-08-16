@@ -236,56 +236,10 @@ export function agingBuckets(data: AppData, lineId: string): AgingBuckets {
   return b;
 }
 
-export interface AgentPerf {
-  id: string;
-  name: string;
-  accessType: string;
-  collected: number;
-  target: number;
-  achievement: number; // 0..1+
-  visits: number;
-  customers: number;
-}
-
-// Agent (member) performance. Payments aren't attributed to members in the
-// demo model, so distribute today's collection proportionally by area coverage
-// to produce a realistic operational view.
-export function agentPerformance(data: AppData, lineId: string): AgentPerf[] {
-  const members = data.members.filter((m) => inLine(m.lineId, lineId));
-  const stats = lineStats(data, lineId);
-  const collectedToday = stats.collectedToday;
-  const totalCustomers = Math.max(1, stats.totalCustomers);
-  const list = members.length
-    ? members
-    : [
-        {
-          id: "self",
-          name: data.profile.name || "You",
-          accessType: "agent",
-        } as { id: string; name: string; accessType: string },
-      ];
-  // deterministic pseudo-distribution weights
-  const weights = list.map((_, i) => 1 + ((i * 7 + 3) % 5) / 10);
-  const wsum = weights.reduce((s, w) => s + w, 0);
-  return list
-    .map((m, i) => {
-      const share = weights[i] / wsum;
-      const collected = Math.round(collectedToday * share);
-      const customers = Math.round((totalCustomers * share));
-      const target = Math.max(1, Math.round(collected / (0.8 + ((i * 13) % 30) / 100)));
-      return {
-        id: m.id,
-        name: m.name,
-        accessType: m.accessType,
-        collected,
-        target,
-        achievement: collected / target,
-        visits: Math.max(customers, Math.round(customers * (0.6 + ((i * 17) % 40) / 100))),
-        customers,
-      };
-    })
-    .sort((a, b) => b.achievement - a.achievement);
-}
+// NOTE: Real per-agent performance (collected/target/visits) needs agent
+// attribution on payments, which isn't captured yet. The dashboard and /field
+// show a "coming soon" placeholder instead of fabricated numbers, so there is
+// deliberately no agentPerformance() selector here.
 
 export interface TxnRow {
   id: string;
@@ -385,7 +339,7 @@ export function exceptions(data: AppData, lineId: string): Exception[] {
   }
 
   // Pending members (agents not yet activated)
-  const pending = data.members.filter((m) => inLine(m.lineId, lineId) && m.status === "pending");
+  const pending = data.members.filter((m) => (m.lineId === null || inLine(m.lineId, lineId)) && m.status === "pending");
   if (pending.length) {
     out.push({
       id: "pending-agents",

@@ -59,8 +59,10 @@ create table public.lines (
 -- ---------- Line members (team access) ----------
 create table public.line_members (
   id uuid primary key default gen_random_uuid(),
-  line_id uuid not null references public.lines on delete cascade,
-  user_id uuid references auth.users on delete cascade,
+  line_id uuid references public.lines on delete cascade,      -- null = all lines (partner "All")
+  area_id uuid,                                                -- null = whole line; FK added after areas table
+  owner_id uuid references auth.users on delete cascade,       -- workspace owner who granted access
+  user_id uuid references auth.users on delete cascade,        -- set when the invited phone signs up
   phone text not null,
   name text not null default '',
   access_type access_type not null default 'agent',
@@ -76,6 +78,11 @@ create table public.areas (
   name text not null,
   created_at timestamptz not null default now()
 );
+
+-- line_members.area_id references areas (declared here since areas is defined after line_members)
+alter table public.line_members
+  add constraint line_members_area_id_fkey
+  foreign key (area_id) references public.areas on delete set null;
 
 -- ---------- Customers ----------
 create table public.customers (
@@ -158,9 +165,36 @@ returns boolean language sql security definer stable set search_path = public as
     select 1 from public.lines l where l.id = l_id and l.owner_id = auth.uid()
   ) or exists (
     select 1 from public.line_members m
-    where m.line_id = l_id and m.user_id = auth.uid() and m.status = 'active'
+    where m.user_id = auth.uid() and m.status = 'active'
+      and (
+        m.line_id = l_id
+        or (m.line_id is null and m.owner_id = (select owner_id from public.lines where id = l_id))
+      )
   );
 $$;
+
+-- Auto-link memberships created for the signed-in user's phone (last 10 digits).
+-- Called by the client on signup/login so no explicit "accept" step is needed.
+create or replace function public.claim_memberships()
+returns integer language plpgsql security definer set search_path = public as $$
+declare
+  myphone text;
+  n integer;
+begin
+  select right(regexp_replace(coalesce(phone, ''), '\D', '', 'g'), 10) into myphone
+  from public.profiles where id = auth.uid();
+  if myphone is null or length(myphone) < 10 then
+    return 0;
+  end if;
+  update public.line_members
+    set user_id = auth.uid(), status = 'active'
+    where user_id is null
+      and right(regexp_replace(coalesce(phone, ''), '\D', '', 'g'), 10) = myphone;
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+grant execute on function public.claim_memberships() to authenticated;
 
 create or replace function public.owns_line(l_id uuid)
 returns boolean language sql security definer stable set search_path = public as $$
@@ -200,9 +234,10 @@ create policy "lines owner delete" on public.lines
 -- (agents' write rules for customers/loans/payments handled in app + can be
 --  refined with permission jsonb; kept owner-write here for safety.)
 create policy "line_members access" on public.line_members
-  for select using (can_access_line(line_id) or user_id = auth.uid());
+  for select using (owner_id = auth.uid() or user_id = auth.uid() or can_access_line(line_id));
 create policy "line_members owner write" on public.line_members
-  for all using (owns_line(line_id)) with check (owns_line(line_id));
+  for all using (owner_id = auth.uid() or owns_line(line_id))
+  with check (owner_id = auth.uid() or owns_line(line_id));
 
 create policy "areas access" on public.areas
   for select using (can_access_line(line_id));

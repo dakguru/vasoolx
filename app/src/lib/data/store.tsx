@@ -139,6 +139,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           const { data: u } = await client.auth.getUser();
           if (u.user) {
             userIdRef.current = u.user.id;
+            // Auto-link any memberships an owner created for this user's phone
+            // number (no accept step); safe/idempotent to run on every load.
+            try {
+              await db.claimMemberships(client);
+            } catch (e) {
+              console.error("[vasoolx claim]", e);
+            }
             const loaded = await loadAll(client, u.user);
             if (!cancelled) commit(loaded);
           }
@@ -584,7 +591,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date().toISOString(),
       };
       commit({ ...d, members: [...d.members, member] });
-      if (SUPA) sync(db.insertMember(sb(), member));
+      if (SUPA) sync(db.insertMember(sb(), member, userIdRef.current!));
     },
     [commit, genId, sb]
   );

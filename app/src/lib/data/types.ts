@@ -87,11 +87,13 @@ export interface Expense {
 
 export interface Member {
   id: string;
-  lineId: string;
+  lineId: string | null; // null = all lines in the workspace (partner "All")
+  areaId: string | null; // null = whole line (agents can be scoped to one area)
   phone: string;
   name: string;
   accessType: AccessType;
   status: "pending" | "active";
+  permissions: Record<string, boolean>;
   createdAt: string;
 }
 

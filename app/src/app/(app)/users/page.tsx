@@ -134,7 +134,12 @@ function Inner() {
                   <thead><tr><th>{t("usr.thUser")}</th><th>{t("fld.thRole")}</th><th>{t("rep.line")}</th><th>{t("dash.thStatus")}</th><th></th></tr></thead>
                   <tbody>
                     {data.members.map((m) => {
-                      const line = data.lines.find((l) => l.id === m.lineId);
+                      const lineLabel = m.lineId === null
+                        ? t("user.allLines")
+                        : data.lines.find((l) => l.id === m.lineId)?.name ?? "—";
+                      const areaLabel = m.areaId
+                        ? data.areas.find((a) => a.id === m.areaId)?.name ?? null
+                        : null;
                       return (
                         <tr key={m.id}>
                           <td>
@@ -144,7 +149,7 @@ function Inner() {
                             </div>
                           </td>
                           <td><StatusBadge tone={m.accessType === "partner" ? "info" : "neutral"} dot={false}>{t(`user.${m.accessType}`)}</StatusBadge></td>
-                          <td className="text-[color:var(--text-soft)]">{line?.name ?? "—"}</td>
+                          <td className="text-[color:var(--text-soft)]">{lineLabel}{areaLabel && <span className="text-[color:var(--text-faint)]"> · {areaLabel}</span>}</td>
                           <td><StatusBadge tone={m.status === "active" ? "ok" : "warn"}>{m.status === "active" ? t("common.active") : t("cust.pending")}</StatusBadge></td>
                           <td><button onClick={() => deleteMember(m.id)} className="w-7 h-7 rounded-md grid place-items-center bg-[color:var(--crit)]/10 text-[color:var(--crit)] ml-auto" aria-label="Remove"><Trash2 size={14} /></button></td>
                         </tr>

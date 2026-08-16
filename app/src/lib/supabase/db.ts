@@ -107,11 +107,13 @@ const expenseFromRow = (r: Row): Expense => ({
 
 const memberFromRow = (r: Row): Member => ({
   id: r.id as string,
-  lineId: r.line_id as string,
+  lineId: (r.line_id as string | null) ?? null,
+  areaId: (r.area_id as string | null) ?? null,
   phone: (r.phone as string) ?? "",
   name: (r.name as string) ?? "",
   accessType: (r.access_type as Member["accessType"]) ?? "agent",
   status: (r.status as Member["status"]) ?? "pending",
+  permissions: (r.permissions as Record<string, boolean>) ?? {},
   createdAt: (r.created_at as string) ?? "",
 });
 
@@ -310,16 +312,22 @@ export const db = {
   deleteExpense: (sb: SB, id: string) => sb.from("expenses").delete().eq("id", id),
 
   // members
-  insertMember: (sb: SB, m: Member) =>
+  insertMember: (sb: SB, m: Member, ownerId: string) =>
     sb.from("line_members").insert({
       id: m.id,
       line_id: m.lineId,
+      area_id: m.areaId,
+      owner_id: ownerId,
       phone: m.phone,
       name: m.name,
       access_type: m.accessType,
       status: m.status,
+      permissions: m.permissions ?? {},
       created_at: m.createdAt,
     }),
+
+  // Link memberships created for the signed-in user's phone (no accept step).
+  claimMemberships: (sb: SB) => sb.rpc("claim_memberships"),
   deleteMember: (sb: SB, id: string) => sb.from("line_members").delete().eq("id", id),
 
   // profile

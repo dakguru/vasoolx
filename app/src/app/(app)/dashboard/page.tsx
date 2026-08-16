@@ -85,7 +85,7 @@ export default function DashboardPage() {
 
   const lineId = activeLine?.id ?? "";
   const areas = data.areas.filter((a) => inLine(a.lineId, lineId));
-  const members = data.members.filter((m) => inLine(m.lineId, lineId));
+  const members = data.members.filter((m) => m.lineId === null || inLine(m.lineId, lineId));
 
   const stats = useMemo(() => (activeLine ? lineStats(data, lineId) : null), [data, lineId, activeLine]);
   const trend7 = useMemo(() => (activeLine ? collectionTrend(data, lineId, 7) : []), [data, lineId, activeLine]);

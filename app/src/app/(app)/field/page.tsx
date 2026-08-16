@@ -55,7 +55,7 @@ function Inner() {
 
   const areas = data.areas.filter((a) => inLine(a.lineId, lineId));
   const members = useMemo(() => {
-    const m = data.members.filter((x) => inLine(x.lineId, lineId));
+    const m = data.members.filter((x) => x.lineId === null || inLine(x.lineId, lineId));
     return m.length ? m : [{ id: "self", name: data.profile.name || "You", accessType: "agent" }];
   }, [data, lineId]);
   const byArea = useMemo(() => collectionByArea(data, lineId), [data, lineId]);
