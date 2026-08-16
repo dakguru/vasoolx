@@ -14,7 +14,7 @@ export function SiteFooter() {
     { Icon: BadgeCheck, title: t("ft.trusted"), sub: t("ft.trustedSub") },
   ];
   return (
-    <footer className="w-full mt-4">
+    <footer className="hidden md:block w-full mt-4">
       {/* Operational intelligence strip — native part of the app shell, on every page */}
       <div className="border-t" style={{ background: "var(--panel-3)", borderColor: "var(--line)" }}>
         <div className="px-5 md:px-6 py-3.5 flex flex-wrap items-center gap-x-6 gap-y-3 justify-between">

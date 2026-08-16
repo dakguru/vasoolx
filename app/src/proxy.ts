@@ -38,6 +38,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api).*)",
+    // Run on pages only — skip Next internals, the API, and any static asset
+    // (anything with a file extension, e.g. /brand/app-icon.png) so public
+    // files are never caught by the auth redirect.
+    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.[\\w]+$).*)",
   ],
 };

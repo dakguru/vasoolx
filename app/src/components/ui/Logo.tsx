@@ -12,6 +12,7 @@ export function LogoMark({ size = 44, className = "" }: { size?: number; classNa
       width={size}
       height={size}
       priority
+      unoptimized
       className={`rounded-[22%] shadow-lg ${className}`}
       style={{ width: size, height: size }}
     />
@@ -29,6 +30,7 @@ export function Wordmark({ height = 34, className = "" }: { height?: number; cla
       width={Math.round(height * ratio)}
       height={height}
       priority
+      unoptimized
       className={className}
       style={{
         height,

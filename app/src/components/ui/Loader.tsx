@@ -20,6 +20,7 @@ export function Loader({
         width={size}
         height={size}
         priority
+        unoptimized
         className="animate-vxspin"
         style={{ width: size, height: size }}
       />

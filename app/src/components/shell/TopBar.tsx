@@ -16,8 +16,17 @@ export function TopBar() {
 
   return (
     <>
-      <header className="md:hidden sticky top-0 z-30 px-4 pt-4 pb-2">
-        <div className="mx-auto max-w-lg flex items-center justify-between gap-2">
+      <header
+        className="md:hidden sticky top-0 z-30 border-b"
+        style={{
+          background: "var(--header-bg)",
+          backdropFilter: "blur(16px) saturate(160%)",
+          WebkitBackdropFilter: "blur(16px) saturate(160%)",
+          borderColor: "var(--line)",
+          paddingTop: "env(safe-area-inset-top)",
+        }}
+      >
+        <div className="px-4 py-2.5 flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
             <button
               onClick={() => window.dispatchEvent(new Event("vx-drawer-open"))}
