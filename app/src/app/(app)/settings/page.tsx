@@ -40,6 +40,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { useTheme, type Theme } from "@/lib/theme/provider";
 import { useAuth } from "@/lib/auth/provider";
 import { useStore } from "@/lib/data/store";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 const TABS = [
   { key: "general", label: "General" },
@@ -263,13 +264,18 @@ function SettingsInner() {
           <Row icon={<FileText size={20} />} label={t("set.termsOfService")} right={<ChevronRight size={18} className="text-[color:var(--text-faint)]" />} />
           <Divider />
           <Row icon={<ShieldCheck size={20} />} label={t("set.privacyPolicy")} right={<ChevronRight size={18} className="text-[color:var(--text-faint)]" />} />
-          <Divider />
-          <Row
-            icon={<RotateCcw size={20} />}
-            label="Reset demo data"
-            onClick={() => { if (confirm(t("set.resetConfirm"))) resetDemo(); }}
-            right={<ChevronRight size={18} className="text-[color:var(--text-faint)]" />}
-          />
+          {/* Demo-only: the Supabase-backed app has no seed to reset. */}
+          {!isSupabaseConfigured && (
+            <>
+              <Divider />
+              <Row
+                icon={<RotateCcw size={20} />}
+                label="Reset demo data"
+                onClick={() => { if (confirm(t("set.resetConfirm"))) resetDemo(); }}
+                right={<ChevronRight size={18} className="text-[color:var(--text-faint)]" />}
+              />
+            </>
+          )}
         </SettingsCard>
 
         <div className="lg:col-span-2">
