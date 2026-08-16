@@ -88,9 +88,13 @@ export function buildSeed(): AppData {
       continue;
     }
     if (l.status === "bad") continue;
+    // Leave today's collection pending for a couple of customers so the
+    // Collect screen has real work to do on first load (rather than all-paid).
+    const pendingToday = l.customerId === "cust_1" || l.customerId === "cust_3";
     for (let d = 9; d >= 0; d--) {
       // skip every 7th day deterministically
       if (d % 7 === 3) continue;
+      if (d === 0 && pendingToday) continue;
       payments.push({
         id: `pay_${l.id}_d${d}`,
         loanId: l.id,

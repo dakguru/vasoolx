@@ -84,7 +84,7 @@ const SECTIONS: NavSection[] = [
     Icon: Users,
     items: [
       { labelKey: "sb.customerDirectory", href: "/customers", Icon: Contact },
-      { labelKey: "sb.customerGroups", href: "/customers?group=all", Icon: UsersRound },
+      { labelKey: "sb.customerGroups", href: "/customers?tab=groups", Icon: UsersRound },
       { labelKey: "sb.customerDocuments", href: "/customers?tab=documents", Icon: FileText },
       { labelKey: "sb.customerHistory", href: "/customers?tab=history", Icon: History },
     ],

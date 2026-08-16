@@ -55,9 +55,11 @@ function CollectInner() {
   const { data, activeLine, addPayment } = useStore();
 
   const view = params.get("tab") === "schedule" ? "schedule" : params.get("tab") === "verify" ? "verify" : "collect";
+  const mode = params.get("mode");
+  const filter = params.get("filter");
 
   const [topTab, setTopTab] = useState<"collect" | "giveloan">("collect");
-  const [statusTab, setStatusTab] = useState<"pending" | "paid">("pending");
+  const [statusTab, setStatusTab] = useState<"pending" | "paid">(filter === "paid" ? "paid" : "pending");
   const [date, setDate] = useState(params.get("date") || toDateInput(new Date().toISOString()));
   const [areaId, setAreaId] = useState(params.get("area") || "");
   const [q, setQ] = useState("");
@@ -93,8 +95,18 @@ function CollectInner() {
   const pending = rows.filter((r) => r.paidToday <= 0 && r.outstanding > 0);
   const paid = rows.filter((r) => r.paidToday > 0);
 
+  // Keep the status tab in sync when navigating via the sidebar
+  // (?filter=pending / ?filter=paid) — client-side nav does not remount.
   useEffect(() => {
-    if (params.get("mode") === "instant") {
+    if (filter === "paid") setStatusTab("paid");
+    else if (filter === "pending") setStatusTab("pending");
+  }, [filter]);
+
+  // Prefill each pending row's due when arriving via "Collect Now" (instant)
+  // or "Bulk Collection" (bulk), so the user can submit them in one go.
+  useEffect(() => {
+    if (mode === "instant" || mode === "bulk") {
+      setStatusTab("pending");
       setEntries((prev) => {
         const next = { ...prev };
         pending.forEach((r) => { if (next[r.loan.id] === undefined) next[r.loan.id] = String(r.due); });
@@ -102,7 +114,7 @@ function CollectInner() {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mode]);
 
   const listed = statusTab === "pending" ? pending : paid;
   const totalEntered = Object.entries(entries).reduce((s, [, v]) => s + (Number(v) || 0), 0);
