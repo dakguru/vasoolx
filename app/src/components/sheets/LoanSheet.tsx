@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
-import { Button, Input, Label, Segmented, Select } from "@/components/ui/primitives";
+import { Button, Input, Label, Select } from "@/components/ui/primitives";
 import { useI18n } from "@/lib/i18n/provider";
 import { useStore } from "@/lib/data/store";
 import { ALL_LINES } from "@/lib/data/selectors";
@@ -29,7 +29,14 @@ export function LoanSheet({
   const targetLineId =
     customer?.lineId ?? (activeLine?.id === ALL_LINES ? data.lines[0]?.id : activeLine?.id) ?? null;
 
-  const [type, setType] = useState<LoanType>("daily");
+  // A loan inherits its line's collection type — it is not chosen per loan.
+  // When editing, keep whatever type the loan was created with.
+  const targetLine = useMemo(
+    () => data.lines.find((l) => l.id === targetLineId) ?? null,
+    [data.lines, targetLineId]
+  );
+  const type: LoanType = editLoan ? editLoan.type : targetLine?.loanType ?? "daily";
+
   const [date, setDate] = useState(toDateInput(new Date().toISOString()));
   const [amount, setAmount] = useState("");
   const [interest, setInterest] = useState("");
@@ -43,7 +50,6 @@ export function LoanSheet({
   useEffect(() => {
     if (open && activeLine) {
       if (editLoan) {
-        setType(editLoan.type);
         setDate(toDateInput(editLoan.startDate));
         setAmount(String(editLoan.principal));
         setInterest(String(editLoan.interest));
@@ -54,7 +60,6 @@ export function LoanSheet({
         setMethod(editLoan.method);
         setCalculated(true);
       } else {
-        setType(activeLine.loanType);
         setPeriod(String(activeLine.installmentsPeriod || 30));
         setBadDays(String(activeLine.badLoanDays || 15));
         setProcessing("");
@@ -86,7 +91,7 @@ export function LoanSheet({
       setInterest(String(suggested));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amount, type]);
+  }, [amount]);
 
   // Auto-suggest processing fees from line rate when amount changes
   useEffect(() => {
@@ -154,15 +159,10 @@ export function LoanSheet({
       <div className="flex flex-col gap-4">
         <div>
           <Label>{t("line.loanType")}</Label>
-          <Segmented<LoanType>
-            value={type}
-            onChange={setType}
-            options={[
-              { value: "daily", label: t("line.daily") },
-              { value: "weekly", label: t("line.weekly") },
-              { value: "monthly", label: t("line.monthly") },
-            ]}
-          />
+          {/* Inherited from the line — shown read-only, not editable per loan. */}
+          <div className="rounded-xl px-4 py-3 border border-[color:var(--line)] bg-[color:var(--surface)] font-semibold text-[color:var(--text)]">
+            {t(`line.${type}`)}
+          </div>
         </div>
 
         <div>
